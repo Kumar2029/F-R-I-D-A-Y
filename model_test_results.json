@@ -1,0 +1,19 @@
+{
+    "send a message to dad on whatsapp that i am coming home": [
+        "open whatsapp",
+        "type dad",
+        "press enter",
+        "type i am coming home",
+        "press enter"
+    ],
+    "send message to brother": [
+        "open whatsapp",
+        "type brother",
+        "press enter."
+    ],
+    "search for python on chrome": [
+        "open chrome",
+        "type python",
+        "press enter."
+    ]
+}

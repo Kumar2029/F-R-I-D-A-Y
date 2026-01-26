@@ -1,0 +1,5 @@
+--- Starting Compiler Verification ---
+[Automation] Raw commands: ['Generate an image of flower']
+[Automation] Compiled commands: ['generate_image flower']
+Processing command: generate_image flower
+[DEBUG] Routing to LOCAL image generation

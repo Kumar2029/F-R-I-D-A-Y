@@ -1,0 +1,7 @@
+Testing Classification Logic with 'command-r-08-2024'...
+Query: 'hello'
+Result: ['general hello.']
+--------------------
+Query: 'open youtube'
+Result: []
+--------------------

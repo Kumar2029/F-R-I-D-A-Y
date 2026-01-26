@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Speech Recognition</title>
+</head>
+<body>
+    <button id="start" onclick="startRecognition()">Start Recognition</button>
+    <button id="end" onclick="stopRecognition()">Stop Recognition</button>
+    <div id="status" style="font-size: 24px; color: red;">Status: Initializing...</div>
+    <div id="debug" style="font-family: monospace; white-space: pre-wrap;"></div>
+    <script>
+        const output = document.getElementById('output');
+        const status = document.getElementById('status');
+        const debug = document.getElementById('debug');
+        let recognition;
+
+        function log(msg) {
+            console.log(msg);
+            debug.textContent += msg + "\n";
+        }
+
+        function startRecognition() {
+            try {
+                recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+                recognition.lang = 'en';
+                recognition.continuous = true;
+                recognition.interimResults = false;
+
+                recognition.onstart = function() {
+                    status.textContent = "Status: Listening (Speak now)...";
+                    status.style.color = "green";
+                    log("Recognition started");
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[event.results.length - 1][0].transcript;
+                    output.textContent += transcript;
+                    status.textContent = "Status: Speech Detected: " + transcript;
+                    log("Result: " + transcript);
+                };
+
+                recognition.onerror = function(event) {
+                    status.textContent = "Status: Error - " + event.error;
+                    status.style.color = "red";
+                    log("Error: " + event.error);
+                };
+
+                recognition.onend = function() {
+                    status.textContent = "Status: Ended (Restarting)...";
+                    log("Recognition ended, restarting...");
+                    recognition.start();
+                };
+
+                recognition.start();
+            } catch (e) {
+                status.textContent = "Status: API Error - " + e.message;
+                log("Exception: " + e.message);
+            }
+        }
+
+        function stopRecognition() {
+            if (recognition) {
+                recognition.stop();
+            }
+            output.innerHTML = "";
+            status.textContent = "Status: Stopped";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "generate_image_hf": {
+    "failures": 1,
+    "quarantined": false,
+    "last_failure": "2026-01-21T18:06:24.278051"
+  },
+  "default_action": {
+    "failures": 1,
+    "quarantined": false,
+    "last_failure": "2026-01-24T13:31:41.170011"
+  },
+  "generate_image_local": {
+    "failures": 0,
+    "quarantined": false,
+    "last_failure": "2026-01-24T12:55:36.008437"
+  }
+}

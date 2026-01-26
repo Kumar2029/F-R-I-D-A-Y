@@ -1,0 +1,35 @@
+python : Traceback 
+(most recent call 
+last):
+At line:1 char:1
++ python 
+test_gso_intents.py 
+2>&1 | Out-File 
+-Encoding ascii 
+output.txt
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (Traceback    
+ (most recent call    
+ last)::String) [    
+], RemoteExceptio    n
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  File "D:\JARVIS 2\ja
+rvis-ai-assistant\test
+_gso_intents.py", 
+line 12, in <module>
+    from 
+Backend.Planner 
+import Planner
+ImportError: cannot 
+import name 'Planner' 
+from 
+'Backend.Planner' 
+(D:\JARVIS 2\jarvis-ai
+-assistant\Backend\Pla
+nner.py)

@@ -1,0 +1,416 @@
+[
+  {
+    "goal_id": "99d7ca38-c9d5-4808-9798-1349e4f3df3a",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769013745.4616463
+  },
+  {
+    "goal_id": "268afff4-17d4-42c8-a435-c941b09edf38",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769013763.3496764
+  },
+  {
+    "goal_id": "0b71d500-4e3b-4ab7-9885-b17e0cf1a178",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769013924.8920658
+  },
+  {
+    "goal_id": "0116df86-f883-4b52-b775-9bdb5105d5b9",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769014025.1540139
+  },
+  {
+    "goal_id": "60b9a781-4c16-4d83-9ab1-2196233fcb90",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769014131.756005
+  },
+  {
+    "goal_id": "dc4c420d-ac74-4d58-b181-0f8b05300410",
+    "strategy_id": "generate_image_hf",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769014315.9986184
+  },
+  {
+    "goal_id": "a2c5543e-a927-4034-9d12-c7a28a42538f",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769014883.24234
+  },
+  {
+    "goal_id": "16f925d1-08ba-4df3-9bca-c1a03bc56dfc",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769014943.3701465
+  },
+  {
+    "goal_id": "dfd64ba8-963d-4b0c-938e-1c4e4ced7fd4",
+    "strategy_id": "generate_image_hf",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769015009.132869
+  },
+  {
+    "goal_id": "cec04c80-1984-4915-87f6-45a6a2428b61",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769015139.176892
+  },
+  {
+    "goal_id": "d10dd27c-357f-47e4-ac5e-fec76b60da58",
+    "strategy_id": "generate_image_hf",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769015327.8707075
+  },
+  {
+    "goal_id": "876d2760-632c-40b9-acdf-d7afcdd95631",
+    "strategy_id": "default_action",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769015381.9982574
+  },
+  {
+    "goal_id": "76ed298d-8dff-4112-9601-252cf3f741ea",
+    "strategy_id": "open_app_direct",
+    "success": true,
+    "time_taken": 1.0,
+    "retries": 0,
+    "user_intervention": false,
+    "timestamp": 1769015404.8379545
+  },
+  {
+    "timestamp": "2026-01-21T17:27:06.597957",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_hf",
+    "success": true,
+    "time_taken": 5.27,
+    "retries": 0,
+    "user_intervention": false,
+    "confidence": 0.824
+  },
+  {
+    "timestamp": "2026-01-21T17:35:56.714424",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_hf",
+    "success": true,
+    "time_taken": 5.59,
+    "retries": 0,
+    "user_intervention": false,
+    "confidence": 0.814
+  },
+  {
+    "timestamp": "2026-01-21T17:46:18.291853",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_hf",
+    "success": true,
+    "time_taken": 5.01,
+    "retries": 0,
+    "user_intervention": false,
+    "confidence": 0.833
+  },
+  {
+    "timestamp": "2026-01-21T18:06:24.278749",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_hf",
+    "success": false,
+    "fallback_used": true,
+    "time_taken": 9.34,
+    "retries": 0,
+    "confidence": 0.2
+  },
+  {
+    "timestamp": "2026-01-23T16:51:57.025215",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_local",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 24.82,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-23T17:17:19.691663",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_local",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 22.7,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-23T17:19:35.147918",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_local",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 29.32,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-23T17:20:30.657993",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_local",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 27.1,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-23T17:32:13.667735",
+    "goal_id": "unknown_intent",
+    "target": null,
+    "strategy": "default_action",
+    "success": false,
+    "fallback_used": true,
+    "time_taken": 4.3,
+    "retries": 0,
+    "confidence": 0.257
+  },
+  {
+    "timestamp": "2026-01-23T17:35:35.583132",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_local",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 26.93,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-23T17:37:58.056690",
+    "goal_id": "unknown_intent",
+    "target": null,
+    "strategy": "default_action",
+    "success": false,
+    "fallback_used": true,
+    "time_taken": 0.01,
+    "retries": 0,
+    "confidence": 0.4
+  },
+  {
+    "timestamp": "2026-01-24T11:45:33.652225",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_local",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 25.23,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-24T12:55:36.009434",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_local",
+    "success": false,
+    "fallback_used": true,
+    "time_taken": 4.42,
+    "retries": 0,
+    "confidence": 0.253
+  },
+  {
+    "timestamp": "2026-01-24T12:55:55.120197",
+    "goal_id": "unknown_intent",
+    "target": null,
+    "strategy": "default_action",
+    "success": false,
+    "fallback_used": true,
+    "time_taken": 0.01,
+    "retries": 0,
+    "confidence": 0.4
+  },
+  {
+    "timestamp": "2026-01-24T12:58:05.126419",
+    "goal_id": "unknown_intent",
+    "target": null,
+    "strategy": "default_action",
+    "success": false,
+    "fallback_used": true,
+    "time_taken": 4.1,
+    "retries": 0,
+    "confidence": 0.263
+  },
+  {
+    "timestamp": "2026-01-24T13:14:09.699707",
+    "goal_id": "unknown_intent",
+    "target": null,
+    "strategy": "default_action",
+    "success": false,
+    "fallback_used": true,
+    "time_taken": 0.02,
+    "retries": 0,
+    "confidence": 0.399
+  },
+  {
+    "timestamp": "2026-01-24T13:20:11.950447",
+    "goal_id": "unknown_intent",
+    "target": null,
+    "strategy": "default_action",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 11.49,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-24T13:20:40.652828",
+    "goal_id": "unknown_intent",
+    "target": null,
+    "strategy": "default_action",
+    "success": false,
+    "fallback_used": true,
+    "time_taken": 0.01,
+    "retries": 0,
+    "confidence": 0.4
+  },
+  {
+    "timestamp": "2026-01-24T13:27:44.148807",
+    "goal_id": "unknown_intent",
+    "target": null,
+    "strategy": "default_action",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 12.04,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-26T14:59:39.474928",
+    "goal_id": "send_message",
+    "target": "brother 2.",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 11.14,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-26T15:00:46.767739",
+    "goal_id": "send_message",
+    "target": "brother 2.",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 10.79,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-26T15:03:13.850133",
+    "goal_id": "open_application",
+    "target": "google chrome friday open google chrome.",
+    "strategy": "open_app_direct",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 4.74,
+    "retries": 0,
+    "confidence": 0.842
+  },
+  {
+    "timestamp": "2026-01-26T15:28:41.047832",
+    "goal_id": "send_message",
+    "target": "brother 2.",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 10.89,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-26T15:29:26.930041",
+    "goal_id": "search_web",
+    "target": "python programming courses online.",
+    "strategy": "search_web",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 5.48,
+    "retries": 0,
+    "confidence": 0.817
+  },
+  {
+    "timestamp": "2026-01-26T15:33:04.904167",
+    "goal_id": "send_message",
+    "target": "brother 2",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 10.95,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-26T15:34:51.213682",
+    "goal_id": "send_message",
+    "target": "brother 2",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 10.97,
+    "retries": 0,
+    "confidence": 0.8
+  },
+  {
+    "timestamp": "2026-01-26T15:35:50.974801",
+    "goal_id": "generate_image",
+    "target": null,
+    "strategy": "generate_image_local",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 2.56,
+    "retries": 0,
+    "confidence": 0.915
+  }
+]
