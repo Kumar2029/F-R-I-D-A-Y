@@ -18,8 +18,8 @@ class OutcomeManager:
         success = primary_success 
 
         # PART 2 Integration: Update Strategy Health
-        from Backend.StrategyHealth import StrategyHealth
-        health_mgr = StrategyHealth()
+        from Backend.StrategyHealth import StrategyHealthManager
+        health_mgr = StrategyHealthManager()
         
         if success:
             health_mgr.record_success(strategy)

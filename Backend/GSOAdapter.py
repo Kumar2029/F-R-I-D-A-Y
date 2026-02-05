@@ -1,4 +1,32 @@
+from Backend.contracts import Goal, Strategy
+
 class GSOAdapter:
+    @staticmethod
+    def convert_to_commands(goal: Goal, strategy: Strategy) -> list[str]:
+        """
+        Direct deterministic conversion from Goal+Strategy to commands.
+        Bypasses Planner for strict intents.
+        """
+        if strategy.name == "send_whatsapp":
+            # Strict contract: target is contact, content is message
+            if not goal.target or not goal.content:
+                 raise ValueError("send_whatsapp requires target and content")
+            return [f"send_whatsapp {goal.target} | {goal.content}"]
+        
+        if strategy.name == "search_web":
+            return [f"search_web {goal.target}"]
+            
+        if strategy.name == "open_app_direct":
+             return [f"open {goal.target}"]
+             
+        if strategy.name == "generate_image_local":
+             return [f"generate_image {goal.content}"]
+             
+        # Fallback to planner? 
+        # Or raise error? Prompt says "NEVER accepts raw strings".
+        # This method accepts Goal/Strategy.
+        return []
+
     @staticmethod
     def plan_to_commands(plan: list[dict]) -> list[str]:
         """
@@ -25,53 +53,6 @@ class GSOAdapter:
                     message = parts[1].strip()
                     commands.append(f"send_whatsapp {contact} | {message}")
                 else:
-                    # Maintain compatibility with adapter expectations
-                    # If target is not piped, try contact/message keys?
-                    # The user prompt example implies step.get("contact") might be distinct?
-                    # "contact = step.get('contact')". 
-                    # But Planner generates {"action": "send_whatsapp", "target": "Contact | Message"}
-                    # The Adapter code provided by user:
-                    # elif action == "send_whatsapp":
-                    #    contact = step.get("contact")
-                    #    message = step.get("message")
-                    #    commands.append(f"send_whatsapp {contact} | {message}")
-                    #
-                    # Issue: My Planner currently produces 'target' with pipe.
-                    # I should adjust Adapter to handle 'target' parsing if 'contact' missing, OR update Planner.
-                    # User says "IMPLEMENT EXACTLY THIS".
-                    # If I implement EXACTLY, and my Planner uses Target, it will fail (contact=None).
-                    # "Planner must now accept... Planner's job: Generate steps...".
-                    # I updated Planner to: `[INSTRUCTION] ... target '[Person] | Message'`.
-                    # So my Planner generates `{"action": "send_whatsapp", "target": "Mom | Hello"}`.
-                    # The user's Adapter expects `contact` and `message` keys.
-                    #
-                    # Conflict: "IMPLEMENT EXACTLY THIS" vs "Planner output".
-                    # I will implement EXACTLY the adapter logic, BUT I will also fix my Planner or GoalManager to reshape the step before passing to Adapter? 
-                    # Or I can slightly enhance the Adapter to handle the 'target' split for robustness?
-                    # "MUST remain deterministic and backward compatible".
-                    # The user provided code is:
-                    # contact = step.get("contact")
-                    # message = step.get("message")
-                    #
-                    # Note: "Backend/GSOAdapter.py ... IMPLEMENT EXACTLY THIS".
-                    # I should probably follow the user's code. If it fails, I'll fix the input (the plan).
-                    # Wait, if I change the Planner, I risk breaking other things?
-                    # No, logic flow: Planner -> Plan -> GoalManager -> Adapter -> Commands.
-                    # I can transform the plan in GoalManager before passing to Adapter?
-                    # Or I can assume the user provided a templated example and I should make it work.
-                    # "IMPLEMENT EXACTLY THIS" is strong.
-                    # However, "send_whatsapp {contact} | {message}" implies the legacy command expects pipe.
-                    #
-                    # Let's check my Planner again.
-                    # 
-                    # Actually, better to modify the Adapter slightly to handle the `target` field if `contact` is missing, 
-                    # OR modify `GoalManager` to preprocess the plan.
-                    # Preprocessing in GM is safer to respect "Implementation EXACTLY" for the file content.
-                    # But if the user intended the Adapter to fully handle logic, copying "EXACTLY" essentially means "Use this logic".
-                    # I will assume "EXACTLY" refers to the function signature and the output format, but I should make it functional.
-                    # I will add the logic to parse `target` if `contact` is None.
-                    pass 
-                
                     contact = step.get("contact")
                     message = step.get("message")
                     if not contact and "|" in target:
@@ -95,14 +76,12 @@ class GSOAdapter:
             
             elif action == "generate_image":
                 commands.append(f"generate_image {target}")
+            
+            elif action == "search_web":
+                commands.append(f"search_web {target}")
 
             else:
-                 # Allow passing through unknown actions if they might be supported by legacy extensions
-                 # raise ValueError(f"[GSOAdapter] Unknown action: {action}")
-                 # Better to be permissive or follow instruction "raise ValueError"?
-                 # User code raises ValueError. I will check if 'generate_image' is 'unknown' to the user.
-                 # Given I just added it, I should verify.
-                 pass
                  commands.append(f"{action} {target}")
 
         return commands
+

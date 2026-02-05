@@ -48,11 +48,11 @@ class ExpectationModel:
         # 2. Determine Action Whitelist based on Scope
         expected_actions = []
         if scope == "low":
-            expected_actions = ["open", "close", "wait", "system"]
+            expected_actions = ["open", "close", "wait", "system", "speak"]
         elif scope == "medium":
-            expected_actions = ["open", "close", "wait", "type", "press", "search_web", "google search", "youtube search", "system"]
+            expected_actions = ["open", "close", "wait", "type", "press", "search_web", "google search", "youtube search", "system", "speak"]
         else: # High
-            expected_actions = ["open", "close", "wait", "type", "press", "search_web", "google search", "youtube search", "play", "content", "system", "send", "click", "send_whatsapp", "generate_image"]
+            expected_actions = ["open", "close", "wait", "type", "press", "search_web", "google search", "youtube search", "play", "content", "system", "send", "click", "send_whatsapp", "generate_image", "speak"]
 
         # 3. Determine Autonomy based on Context (Trust/Patience)
         # In v4, we use the ContextEngine output passed as 'context'

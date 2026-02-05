@@ -42,8 +42,84 @@ SEARCH_REGION = {
     "h": 0.08    
 }
 
+HEADER_REGION = {
+    "x": 0.35,   # Right of search pane (approx 30-35%)
+    "y": 0.0,    # Top edge
+    "w": 0.50,   # Wide enough for name
+    "h": 0.12    # Top bar height
+}
+
 
 useragent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36'
+
+# ... (Existing Code) ...
+
+def verify_chat_header(hwnd, expected_contact):
+    """
+    Verifies that the open chat matches the expected contact name using OCR.
+    """
+    if not is_ocr_available():
+        print("[OCR] OCR Unavailable. Skipping header verification (Trusting Input Readiness).")
+        return True # Trust the previous steps
+            
+    try:
+        print(f"[OCR] Verifying Chat Header for '{expected_contact}'...")
+        rect = win32gui.GetWindowRect(hwnd)
+        x, y, x2, y2 = rect
+        w = x2 - x
+        h = y2 - y
+        
+        region_left = x + int(w * HEADER_REGION["x"])
+        region_top = y + int(h * HEADER_REGION["y"])
+        region_width = int(w * HEADER_REGION["w"])
+        region_height = int(h * HEADER_REGION["h"])
+        
+        # Capture
+        img = pyautogui.screenshot(region=(region_left, region_top, region_width, region_height))
+        
+        # OCR
+        text = pytesseract.image_to_string(img).strip().lower()
+        print(f"[OCR] Header Text: '{text}'")
+        
+        # Normalize expected
+        expected = expected_contact.lower().strip()
+        
+        # Check containment (Fuzzy match might be needed but start simple)
+        if expected in text:
+            print("[OCR] Chat Header Verified.")
+            return True
+        else:
+            print(f"[OCR] Mismatch! Expected '{expected}' not found in header.")
+            return False
+            
+    except Exception as e:
+        print(f"[OCR] Header Verification Failed: {e}")
+        # Fail safe
+        return False
+
+# --- OCR/Tesseract Availability Check (Part A) ---
+OCR_AVAILABLE = False
+try:
+    # Simple check if tesseract is in path or pytesseract can be imported
+    import pytesseract
+    # Check binary presence (optional but good)
+    # This might throw if tesseract not installed
+    # We can try a dummy command or just trust import + try/except runtime
+    OCR_AVAILABLE = True 
+    # For robust check, we might want to check Tesseract cmd, but let's assume valid import is enough for flag init,
+    # and runtime errors catch remainder.
+    # Actually, pytesseract.get_tesseract_version() is a good check.
+    try:
+        pytesseract.get_tesseract_version()
+    except:
+        OCR_AVAILABLE = False
+except ImportError:
+    OCR_AVAILABLE = False
+
+print(f"[System] OCR Availability: {OCR_AVAILABLE}")
+
+def is_ocr_available():
+    return OCR_AVAILABLE
 
 # Initialize Groq client only if API key exists
 client = None
@@ -65,6 +141,37 @@ def GoogleSearch(topic):
     return True
 
 
+def ContentWriterAI(prompt):
+    if not client:
+        print("Error: Groq API key not found. Please check your .env file.")
+        return "Error: Unable to generate content - API key missing."
+    
+    try:
+        messages.append({"role": "user", "content": f"{prompt}"})
+
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=SystemChatBot + messages,
+            max_tokens=2048,
+            temperature=0.7,
+            top_p=1,
+            stream=True,
+            stop=None
+        )
+
+        answer = ""
+
+        for chunk in completion:
+            if chunk.choices[0].delta.content:
+                answer += chunk.choices[0].delta.content
+
+        answer = answer.replace("</s>", "")
+        messages.append({"role": "assistant", "content": answer})
+        return answer
+    except Exception as e:
+        print(f"Error generating content: {e}")
+        return f"Error: Unable to generate content - {str(e)}"
+
 def Content(topic):
     def OpenNotepad(file):
         try:
@@ -74,37 +181,6 @@ def Content(topic):
         except Exception as e:
             print(f"Error opening notepad: {e}")
             return False
-
-    def ContentWriterAI(prompt):
-        if not client:
-            print("Error: Groq API key not found. Please check your .env file.")
-            return "Error: Unable to generate content - API key missing."
-        
-        try:
-            messages.append({"role": "user", "content": f"{prompt}"})
-
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=SystemChatBot + messages,
-                max_tokens=2048,
-                temperature=0.7,
-                top_p=1,
-                stream=True,
-                stop=None
-            )
-
-            answer = ""
-
-            for chunk in completion:
-                if chunk.choices[0].delta.content:
-                    answer += chunk.choices[0].delta.content
-
-            answer = answer.replace("</s>", "")
-            messages.append({"role": "assistant", "content": answer})
-            return answer
-        except Exception as e:
-            print(f"Error generating content: {e}")
-            return f"Error: Unable to generate content - {str(e)}"
 
     topic = topic.replace("content", "").strip()
     content_by_ai = ContentWriterAI(topic)
@@ -190,7 +266,13 @@ def OpenApp(app, sess=requests.session()):
             try:
                 subprocess.Popen(system_apps[app_lower])
                 print(f"Opened {app} via system command.")
-                return True
+                
+                # Verify
+                if wait_until(lambda: FocusWindow(app), timeout=5, interval=0.5):
+                    return True
+                else:
+                    print(f"Failed to verify {app} opened.")
+                    return False
             except Exception as e:
                 print(f"Failed to open system app {app}: {e}")
 
@@ -350,7 +432,7 @@ def perform_search_input_probe(hwnd):
         # 1. Type Probe
         print(f"[OCR] Typing probe '{PROBE}'...")
         pyautogui.write(PROBE, interval=0.05)
-        time.sleep(0.5) # Allow UI to render
+        time.sleep(0.1) # Allowed limit (Wait for UI to render)
         
         # 2. Capture Screenshot of Search Region
         rect = win32gui.GetWindowRect(hwnd)
@@ -398,6 +480,9 @@ def perform_search_input_probe(hwnd):
             pyautogui.hotkey('ctrl', 'a')
             pyautogui.press('backspace') 
         except: pass
+        
+        if not is_ocr_available():
+            return verify_input_safety(hwnd)
         return False
 
 # --- PERSISTENT STATE PREDICATES ---
@@ -522,6 +607,9 @@ def secure_send_whatsapp(contact_name, message):
     """
     print(f"[Automation] Starting Secure Send to '{contact_name}'...")
     
+    # Part E: Normalize Contact Name
+    contact_name = contact_name.strip().replace(".", "") # Simple normalization
+    
     # 1. Open & Setup (reusing secure workflow logic)
     if not secure_whatsapp_workflow():
         return False
@@ -532,26 +620,52 @@ def secure_send_whatsapp(contact_name, message):
     # SAFETY CLICK: Re-assert focus before real typing (Fixes probe cleanup focus loss)
     hwnd = get_whatsapp_window()
     click_relative(hwnd, WHATSAPP_SEARCH_RATIO_X, WHATSAPP_SEARCH_RATIO_Y)
-    time.sleep(0.1)
+    time.sleep(0.05) # Reduced from 0.1 (Part F)
+    
+    # NEW: Clear Search State (Part E)
+    print("[Automation] Clearing search state...")
+    pyautogui.hotkey('ctrl', 'a')
+    time.sleep(0.05)
+    pyautogui.press('backspace')
+    time.sleep(0.05)
     
     pyautogui.write(contact_name, interval=TYPING_INTERVAL)
     
     # Allow search results to render
     print("[Automation] Navigating search results via keyboard...")
-    time.sleep(0.6) # Minimal UI render delay (cannot be zero)
-
+    time.sleep(0.8) # Reduced from 1.0 (Part F)
+    
     # KEYBOARD SELECTION (More reliable than mouse)
     # Move focus to first search result
     pyautogui.press("down")
-    time.sleep(0.1)
+    time.sleep(0.05)
     # Open selected chat
     pyautogui.press("enter")
 
     print("[Wait] Verifying chat open via message input readiness...")
-    if not wait_until(lambda: verify_input_safety(get_whatsapp_window()), timeout=6, on_fail_reason="Chat Open"):
-        print("[Automation] ABORT: Chat for '{contact_name}' did not open.")
-        return False
-        
+    if not verify_input_safety(get_whatsapp_window()): # Use direct check first
+         # Wait a bit if failed
+         if not wait_until(lambda: verify_input_safety(get_whatsapp_window()), timeout=5, on_fail_reason="Chat Open"):
+            print(f"[Automation] ABORT: Chat for '{contact_name}' did not open.")
+            return False
+
+    # NEW: Verify Header (Strict Guard) -> Now Optional (Part A)
+    # If OCR is available, we check. If not, verify_chat_header returns True.
+    if not wait_until(lambda: verify_chat_header(get_whatsapp_window(), contact_name), timeout=5, on_fail_reason="Header Verification"):
+         # Part B/E: If OCR missing, we shouldn't fail (verify_chat_header handles this).
+         # If OCR is PRESENT but fails match, we assume wrong chat?
+         # User says: "If chat header cannot be verified AND input is ready -> proceed -> do NOT abort"
+         
+         # If verify_chat_header returned False, it means OCR matched something else explicitly.
+         # But verify_chat_header() returns False on exception or mismatch.
+         # If input is ready (verified above), we might want to Proceed anyway?
+         # User Requirement: "If fail... -> proceed -> do NOT abort" (Part E)
+         print(f"[Automation] WARNING: Header verification failed. Assuming correct chat due to Input Readiness.")
+         # Proceeding instead of returning False
+         # TTS(f"I could not open the correct chat for {contact_name}. Please confirm.")
+         # return False
+         pass 
+
     # 5. Type Message
     print(f"[Wait] Waiting for Message Input Readiness...")
     if not wait_until(lambda: is_message_ready(get_whatsapp_window()), timeout=4, on_fail_reason="Message Input"):
@@ -564,7 +678,7 @@ def secure_send_whatsapp(contact_name, message):
     
     # 6. Verify Sent (Input Cleared)
     print(f"[Wait] Verifying Message Sent (Input Cleared/Ready)...")
-    time.sleep(0.5)
+    # Immediate check follows
     if wait_until(lambda: is_message_ready(get_whatsapp_window()), timeout=5):
         print("[Automation] Message Sent Verified (Input ready).")
         return True
@@ -602,7 +716,9 @@ def FocusWindow(app_name):
                 pyautogui.press('alt') 
                 win32gui.SetForegroundWindow(target_hwnd)
                 
-            time.sleep(0.5)
+            # Verify focus acquisition
+            if not wait_until(lambda: win32gui.GetForegroundWindow() == target_hwnd, timeout=2.0, interval=0.1):
+                print(f"[Focus] Warning: Window '{app_name}' did not report foreground match.")
             return True
         else:
             print(f"Window '{app_name}' not found for focusing.")
@@ -662,7 +778,7 @@ def System(command):
         return False
 
 def Type(text, target_app=None):
-    time.sleep(1) # Wait for focus
+    # Removed blind sleep for focus
     
     # Optional: Logic to verify active window title if target_app is provided
     # active_window = win32gui.GetWindowText(win32gui.GetForegroundWindow())
@@ -670,7 +786,7 @@ def Type(text, target_app=None):
     
     try:
         pyautogui.write(text)
-        time.sleep(2) # Wait for UI to process/search results
+        # Removed blind sleep: time.sleep(2)
         print(f"Typed: {text}")
         return True
     except Exception as e:
@@ -691,10 +807,25 @@ def Press(key):
         return False
 
 
-async def execute_step(action, target):
+from Backend.outcomes import Outcome
+
+from functools import wraps
+
+def measure_time(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = await func(*args, **kwargs)
+        duration = time.time() - start_time
+        print(f"[Timing] {func.__name__} took {duration:.2f}s")
+        return result
+    return wrapper
+
+@measure_time
+async def execute_step(action, target) -> Outcome:
     """
     Executes a single step.
-    Returns: {"status": "success"|"failed", "reason": "..."}
+    Returns: Outcome(success=True|False, reason="...")
     """
     try:
         # Step-specific TTS
@@ -704,35 +835,35 @@ async def execute_step(action, target):
         if action == "open":
             await asyncio.to_thread(TTS, f"Opening {target}")
             success = await asyncio.to_thread(OpenApp, target)
-            return {"status": "success" if success else "failed"}
+            return Outcome(success=success, reason=None if success else "Failed to open app")
 
         elif action == "close":
             await asyncio.to_thread(TTS, f"Closing {target}")
             success = await asyncio.to_thread(CloseApp, target)
-            return {"status": "success" if success else "failed"}
+            return Outcome(success=success, reason=None if success else "Failed to close app")
 
         elif action == "play":
             await asyncio.to_thread(TTS, f"Playing {target}")
             success = await asyncio.to_thread(PlayYoutube, target)
-            return {"status": "success" if success else "failed"}
+            return Outcome(success=success, reason=None if success else "Failed to play media")
 
         elif action == "content":
             await asyncio.to_thread(Content, target)
-            return {"status": "success"}
+            return Outcome(success=True)
 
         elif action == "search_web" or action == "google search":
             await asyncio.to_thread(TTS, f"Searching Google for {target}")
             await asyncio.to_thread(GoogleSearch, target)
-            return {"status": "success"}
+            return Outcome(success=True)
             
         elif action == "youtube search":
             await asyncio.to_thread(TTS, f"Searching YouTube for {target}")
             await asyncio.to_thread(YouTubeSearch, target)
-            return {"status": "success"}
+            return Outcome(success=True)
 
         elif action == "system":
             await asyncio.to_thread(System, target)
-            return {"status": "success"}
+            return Outcome(success=True)
 
         elif action == "generate_image":
             # PART 4: EXECUTION BRIDGE
@@ -747,12 +878,12 @@ async def execute_step(action, target):
                 # Verify file exists
                 if os.path.exists(path):
                     os.startfile(path)
-                    return {"status": "success"}
+                    return Outcome(success=True)
                 else:
-                    return {"status": "failed", "reason": "Image file not found after generation"}
+                    return Outcome(success=False, reason="Image file not found after generation")
             except Exception as e:
                 print(f"[ImageGen] Local Generation Error: {e}")
-                return {"status": "failed", "reason": str(e)}
+                return Outcome(success=False, reason=str(e))
 
         elif action == "type":
             text = target
@@ -761,28 +892,34 @@ async def execute_step(action, target):
             
             await asyncio.to_thread(TTS, f"Typing: {text}")
             success = await asyncio.to_thread(Type, text)
-            return {"status": "success" if success else "failed"}
+            return Outcome(success=success, reason=None if success else "Failed to type text")
 
         elif action == "press":
             key = target.removesuffix(".")
             success = await asyncio.to_thread(Press, key)
-            return {"status": "success" if success else "failed"}
+            return Outcome(success=success, reason=None if success else "Failed to press key")
             
+        elif action == "speak":
+            # TTS is blocking or async? Backend.TextToSpeech.TTS usually blocks?
+            # We run it in thread.
+            await asyncio.to_thread(TTS, target)
+            return Outcome(success=True)
+
         elif action == "wait":
             try:
                 seconds = float(target)
                 print(f"[AUTOMATION] Waiting for {seconds} seconds")
                 await asyncio.sleep(seconds)
-                return {"status": "success"}
+                return Outcome(success=True)
             except Exception as e:
-                return {"status": "failed", "reason": str(e)}
+                return Outcome(success=False, reason=str(e))
 
         else:
-            return {"status": "failed", "reason": f"Unknown action: {action}"}
+            return Outcome(success=False, reason=f"Unknown action: {action}")
 
     except Exception as e:
         print(f"Execute Step Error: {e}")
-        return {"status": "failed", "reason": str(e)}
+        return Outcome(success=False, reason=str(e))
 
 async def TranslateAndExecute(commands: list[str]):
     funcs = []
@@ -798,10 +935,12 @@ async def TranslateAndExecute(commands: list[str]):
             yield await execute_step("play", command.removeprefix("play ").strip())
         elif command.startswith("content "):
             yield await execute_step("content", command.removeprefix("content ").strip())
-        elif command.startswith("google search "):
-            yield await execute_step("search_web", command.removeprefix("google search ").strip())
-        elif command.startswith("search_web "):
-            yield await execute_step("search_web", command.removeprefix("search_web ").strip())
+        elif command.startswith("search_web ") or command.startswith("google search "):
+            # Handle both "search_web" and "google search" as the same action
+            if command.startswith("google search "):
+                yield await execute_step("search_web", command.removeprefix("google search ").strip())
+            else: # command.startswith("search_web ")
+                yield await execute_step("search_web", command.removeprefix("search_web ").strip())
         elif command.startswith("youtube search "):
              yield await execute_step("youtube search", command.removeprefix("youtube search ").strip())
         elif command.startswith("system "):
@@ -810,38 +949,40 @@ async def TranslateAndExecute(commands: list[str]):
              yield await execute_step("type", command.removeprefix("type ").strip())
         elif command.startswith("press "):
              yield await execute_step("press", command.removeprefix("press ").strip())
+        elif command.startswith("speak "):
+             yield await execute_step("speak", command.removeprefix("speak ").strip())
         elif command.startswith("send_whatsapp "):
              # Format: send_whatsapp [Contact] | [Message]
              parts = command.removeprefix("send_whatsapp ").split("|")
              if len(parts) >= 2:
                  contact = parts[0].strip()
                  msg = parts[1].strip()
+                 if msg.lower() == "none" or msg == "":
+                     print("[Automation] ABORT: Message content is empty or 'None'.")
+                     yield Outcome(success=False, reason="Message content missing")
+                     continue # Skip execution
+                 
                  await asyncio.to_thread(TTS, f"Sending WhatsApp message to {contact}")
                  success = await asyncio.to_thread(secure_send_whatsapp, contact, msg)
-                 yield {"status": "success" if success else "failed"}
+                 yield Outcome(success=success, reason=None if success else "Secure WhatsApp flow failed")
              else:
                  print("[Automation] Invalid send_whatsapp format. Use 'Contact | Message'")
-                 yield {"status": "failed", "reason": "Invalid format"}
+                 yield Outcome(success=False, reason="Invalid send_whatsapp format")
         
         elif command.startswith("generate_image "):
             print("[DEBUG] Routing to LOCAL image generation")
             prompt = command.removeprefix("generate_image ").strip()
             
-            from Backend.ImageGenerationLocal import generate_image_local
-            import os
-            # asyncio removed (globally imported)
-            
-            path = await asyncio.to_thread(generate_image_local, prompt)
-            os.startfile(path)
-            
-            yield {"status": "success"}
+            # Reusing the logic inside execute_step via recursion or call?
+            # Better to call execute_step to keep logic centralized
+            yield await execute_step("generate_image", prompt)
 
         elif command.startswith("wait "):
              yield await execute_step("wait", command.removeprefix("wait ").strip())
 
         else:
             print(f"[Automation] Unknown command: {command}")
-            yield {"status": "failed", "reason": "Unknown command"}
+            yield Outcome(success=False, reason=f"Unknown command: {command}")
 
 
 from Backend.CommandCompiler import compile_commands

@@ -7,7 +7,7 @@ class FailureAnalyzer:
 
     def analyze_failure(self, goal_type, context, failure_stage, failure_reason):
         """
-        Analyzes a failure, records it, and returns an adaptation strategy.
+        Analyzes a failure and returns a corrective action.
         """
         timestamp = datetime.datetime.now().isoformat()
         
@@ -22,29 +22,35 @@ class FailureAnalyzer:
         
         self.memory.record_failure(failure_record)
         
-        # LEARNING LOGIC
+        # STAGE 4: DIAGNOSTIC LOGIC
+        reason_lower = failure_reason.lower()
+        correction = "RETRY" # Default
+        
+        if "focus" in reason_lower or "active" in reason_lower:
+            correction = "REFOCUS"
+        elif "not found" in reason_lower or "missing" in reason_lower:
+             # If element missing, maybe app isn't open or wrong page
+             correction = "REOPEN" 
+        elif "typing" in reason_lower or "input" in reason_lower:
+             correction = "RETYPE"
+        elif "network" in reason_lower or "timeout" in reason_lower:
+             correction = "WAIT"
+        elif "logic" in reason_lower or "unknown" in reason_lower:
+             correction = "ABORT"
+
+        # Escalation based on history
         past_failures = self.memory.get_failures_by_goal(goal_type)
         failure_count = len(past_failures)
         
-        # Rule A: Confidence Decay
-        # Each failure reduces confidence by 25%
-        confidence_decay = 0.75 ** failure_count
-        
-        # Rule B: Risk Escalation
-        # Each failure adds 0.2 to risk score
-        risk_escalation = 0.2 * failure_count
-        
-        # Rule C: Forced Clarification / Mode Switch
-        recommendation = "RETRY"
-        if failure_count >= 2:
-            recommendation = "ASK_USER"
-        elif failure_count >= 1:
-            recommendation = "CAUTIOUS_RETRY"
+        if failure_count >= 3:
+            correction = "ABORT"
             
+        print(f"[FailureAnalyzer] Diagnosis: {failure_reason} -> {correction}")
+
         return {
-            "confidence_modifier": confidence_decay,
-            "risk_modifier": risk_escalation,
-            "recommendation": recommendation,
+            "correction": correction,
+            "risk_modifier": 0.2 * failure_count,
+            "recommendation": correction, # Legacy compatibility
             "failure_count": failure_count
         }
 

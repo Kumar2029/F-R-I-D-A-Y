@@ -1,170 +1,203 @@
 import re
-
-class Goal:
-    def __init__(self, goal_id, target=None, content=None, priority="normal", constraints=None):
-        self.goal_id = goal_id
-        self.target = target
-        self.content = content
-        self.priority = priority
-        self.constraints = constraints or {}
-
-    def __repr__(self):
-        return f"Goal(id={self.goal_id}, target={self.target}, content={self.content}, priority={self.priority})"
-
+from Backend.contracts import Goal
 
 class GoalExtractor:
     def __init__(self):
-        # Regex patterns for common goals
-        self.patterns = [
-            (r"(?i)(send|message|text|whatsapp|tell) (.+?) (that|saying) (.+)", "send_message"), # "Send Mom that I'm late"
-            (r"(?i)(send|message|text|whatsapp|tell) (.+?) (.+)", "send_message"), # "WhatsApp Mom I'm late" (fallback)
-            (r"(?i)(send a message to) (.+)", "send_message_incomplete"), # "Send a message to Mom"
-            (r"(?i)(generate|create|make)\s+(?:me\s+)?(?:(?:an?|the)\s+)?image\s+of\s+(.+)", "generate_image"), # "Generate me an image of a flower"
-        ]
-
-    def normalize_entity(self, text: str) -> str:
-        """
-        Removes trailing punctuation and normalizes whitespace.
-        Example: "brother 2." -> "brother 2"
-        """
-        if not text:
-            return text
-
-        # Remove leading/trailing whitespace
-        text = text.strip()
-
-        # Remove trailing punctuation (.,!?)
-        text = re.sub(r"[.,!?]+$", "", text)
-
-        # Collapse multiple spaces
-        text = re.sub(r"\s+", " ", text)
-
-        return text
+        # Regex patterns are now less central, logic is prioritized
+        pass
 
     def extract_contact_name(self, text):
-        # Heuristic: "to [Name]"
+        # 1. "to [name]"
         match = re.search(r"to\s+(.+?)(\s+(saying|that|with)|$)", text, re.IGNORECASE)
         if match:
-            return self.normalize_entity(match.group(1))
+            return match.group(1).strip()
+            
+        # 2. "whatsapp [name]" (fallback if no message found by other patterns)
+        # We must be careful not to capture message content as name.
+        # This runs if specific patterns failed.
+        match_direct = re.search(r"^(?:whatsapp|text|msg|message|tell)\s+(?!to\s)(.+?)$", text, re.IGNORECASE)
+        if match_direct:
+            return match_direct.group(1).strip()
+            
         return None
 
     def extract_message_content(self, text):
-        # Heuristic: "saying [Message]" or "that [Message]" or just matches after contact
-        # If explicit format "send a message to X saying Y"
         match = re.search(r"(saying|that)\s+(.+)$", text, re.IGNORECASE)
         if match:
-            return self.normalize_entity(match.group(2))
-        # Fallback: check if we split by "to [Name]"
-        # If text is "Send a hi message to brother 2" -> This is tricky without strict pattern.
-        # User example: "Send a hi message to brother 2" -> Content="hi", Contact="brother 2"
-        # "Send a [Content] message to [Contact]"
+            return match.group(2).strip()
+            
         match_embedded = re.search(r"send\s+(?:a\s+)?(.+?)\s+message\s+to\s+(.+)$", text, re.IGNORECASE)
         if match_embedded:
-            return self.normalize_entity(match_embedded.group(1))
+            return match_embedded.group(1).strip()
             
         return None
+
+    def _infer_message_content(self, contact_name):
+        """
+        Infers a default message based on the contact relationship.
+        v4 Requirement: Eliminate over-clarification.
+        """
+        c = contact_name.lower().strip()
+        if any(x in c for x in ["mum", "mom", "mother", "dad", "father", "parent"]):
+            return "Hi"
+        if any(x in c for x in ["bro", "brother", "sis", "sister", "friend", "bestie"]):
+            return "Hey"
+        if any(x in c for x in ["boss", "sir", "manager", "lead"]):
+            return "Hello, I wanted to reach out regarding work."
+        
+        # Default fallback
+        return "Hello"
 
     def extract_goal(self, user_input):
         """
         Convert raw user input into an abstract goal.
+        Input is assumed to be normalized (lowercase, no punctuation).
+        Logic:
+        1. CONTENT MODE (Reasoning, logic, code, generation)
+        2. ACTION MODE (Automation) - Strict parameter checks
+        3. QUERY MODE (Missing info or unclear)
         """
-        # cleans input
         clean_input = user_input.strip()
 
-        # PART 1: EXPLICIT MESSAGING RULE (High Priority)
-        # "Send a hi message to brother 2"
-        if "send" in clean_input.lower() and "message" in clean_input.lower():
-            # Sub-rule: "Send a message to [Contact]" (No content embedded)
-            # This prevents capture of 'a' as content in the next rule.
-            simple_match = re.search(r"^send\s+(?:a\s+)?message\s+to\s+(.+)$", clean_input, re.IGNORECASE)
-            if simple_match:
-                 return Goal(
-                    goal_id="send_message",
-                    target=self.normalize_entity(simple_match.group(1)),
-                    content=None, # Content missing
-                    priority="normal"
-                )
+        # 1. CONTENT MODE (Reasoning, logic, code, generation)
+        # Keywords from requirement
+        content_keywords = ["write", "explain", "generate", "code", "pattern", "algorithm", 
+                          "example", "story", "definition", "create"]
+        
+        # Exception: "generate image" is ACTION (handled later)
+        # Exception: "create image" is ACTION
+        is_image_gen = "image" in clean_input and ("generate" in clean_input or "create" in clean_input or "make" in clean_input)
+        
+        if not is_image_gen:
+             for keyword in content_keywords:
+                 if keyword in clean_input:
+                     return Goal(
+                         name="generate_content",
+                         response_mode="CONTENT",
+                         content=clean_input
+                     )
 
-            # Try embedded first: "Send a [Content] message to [Contact]"
-            # This covers the user example perfectly.
-            embedded_match = re.search(r"send\s+(?:a\s+)?(.+?)\s+message\s+to\s+(.+)$", clean_input, re.IGNORECASE)
-            if embedded_match:
-                return Goal(
-                    goal_id="send_message",
-                    target=self.normalize_entity(embedded_match.group(2)),
-                    content=self.normalize_entity(embedded_match.group(1)),
-                    priority="normal"
-                )
-
-            contact = self.extract_contact_name(clean_input)
-            message = self.extract_message_content(clean_input)
+        # 2. ACTION MODE (Automation)
+        
+        # A. WhatsApp / Message
+        if "send" in clean_input or "message" in clean_input or "whatsapp" in clean_input or "tell" in clean_input:
+            contact = None
+            message = None
             
-            # Safety: Both must be present (Part 4)
-            if contact and message:
+            # Pattern: "tell [name] [message]"
+            if "tell" in clean_input:
+                 match = re.search(r"(?i)^tell\s+(.+?)\s+(.+)$", clean_input)
+                 if match:
+                     contact, message = match.group(1).strip(), match.group(2).strip()
+            
+            # Pattern: "whatsapp [name] [message]"
+            elif "whatsapp" in clean_input and not "send" in clean_input:
+                 match = re.search(r"(?i)^(whatsapp|text|msg|message)\s+(.+?)\s+(.+)$", clean_input)
+                 if match:
+                     contact, message = match.group(2).strip(), match.group(3).strip()
+            
+            # General "send message" patterns
+            else:
+                 contact = self.extract_contact_name(clean_input)
+                 message = self.extract_message_content(clean_input)
+                 
+                 # Pattern: "send message to [contact]" (Check if explicitly missing content)
+                 if not contact and not message:
+                      match = re.search(r"^send\s+(?:a\s+)?message\s+to\s+(.+)$", clean_input, re.IGNORECASE)
+                      if match:
+                           contact = match.group(1).strip()
+            
+            # DECISION LOGIC
+            if contact:
+                # v4 Upgrade: Infer message if missing
+                if not message:
+                    message = self._infer_message_content(contact)
+                    print(f"[GoalExtractor] Inferred default message '{message}' for '{contact}'")
+                
                 return Goal(
-                    goal_id="send_message",
+                    name="send_message",
                     target=contact,
                     content=message,
-                    priority="normal"
+                    priority="normal",
+                    response_mode="ACTION"
                 )
-             # If missing, fall through to other patterns or general chat
-
-        # 1. Check for "Send Message" patterns
-        # More robust regex for "Message [Person] [Content]"
-        # Try specific patterns first
-        
-        # Pattern: "Tell [Name] [Message]"
-        match = re.search(r"(?i)^tell\s+(.+?)\s+(.+)$", clean_input)
-        if match:
-             return Goal(
-                 goal_id="send_message", 
-                 target=self.normalize_entity(match.group(1)), 
-                 content=self.normalize_entity(match.group(2))
-             )
-
-        # Pattern: "Send a message to [Name] saying [Message]"
-        match = re.search(r"(?i)send\s+(?:a)?\s*message\s+to\s+(.+?)\s+(?:saying|that)\s+(.+)$", clean_input)
-        if match:
+                 
+            elif message and not contact:
+                 return Goal(
+                     name="clarify",
+                     response_mode="QUERY",
+                     content="Who should I send that message to?"
+                 )
+                 
+            elif message and not contact:
+                 return Goal(
+                     name="clarify",
+                     response_mode="QUERY",
+                     content="Who should I send that message to?"
+                 )
+            
+            # Ambiguous message intent -> QUERY
             return Goal(
-                goal_id="send_message", 
-                target=self.normalize_entity(match.group(1)), 
-                content=self.normalize_entity(match.group(2))
-            )
-
-        # Pattern: "WhatsApp [Name] [Message]" (We map 'WhatsApp' to generic send_message goal, NOT tool)
-        match = re.search(r"(?i)^(whatsapp|text|msg|message)\s+(.+?)\s+(.+)$", clean_input)
-        if match:
-             return Goal(
-                 goal_id="send_message", 
-                 target=self.normalize_entity(match.group(2)), 
-                 content=self.normalize_entity(match.group(3))
+                 name="clarify",
+                 response_mode="QUERY",
+                 content="Who do you want to message and what should I say?"
              )
-        
-        # Pattern: "Generate image of [Prompt]"
-        match = re.search(r"(?i)(generate|create|make)\s+(?:me\s+)?(?:(?:an?|the)\s+)?image\s+of\s+(.+)", clean_input)
-        if match:
-             return Goal(goal_id="generate_image", content=self.normalize_entity(match.group(2)))
-        
-        # General Fallback for "Send message to X" without content (might be handled by Planner asking for content, or we assume content is missing)
-        # For now, let's map unknown simple intents or rely on LLM if we had it here, but stick to rules.
-        
-        # Search Rule
+
+        # B. Image Generation
+        if is_image_gen:
+            match = re.search(r"(?i)(generate|create|make)\s+(?:me\s+)?(?:(?:an?|the)\s+)?image\s+of\s+(.+)", clean_input)
+            if match:
+                 return Goal(
+                     name="generate_image", 
+                     content=match.group(2).strip(),
+                     response_mode="ACTION"
+                 )
+            else:
+                 return Goal(
+                     name="clarify",
+                     response_mode="QUERY",
+                     content="What kind of image should I generate?"
+                 )
+
+        # C. Search
         match = re.search(r"(?i)^(?:friday\s+)?(?:please\s+)?(search|find|lookup)\s+(?:for\s+)?(.+)$", clean_input)
         if match:
-             return Goal(goal_id="search_web", target=self.normalize_entity(match.group(2)))
+             return Goal(
+                 name="search_web", 
+                 target=match.group(2).strip(),
+                 response_mode="ACTION"
+             )
 
-        # If no regex matches, maybe it's a "general" chat or "open" command?
-        # The prompt says: "Convert raw user input into an abstract goal, independent of tools."
-        # "Open Chrome" -> goal_id="open_application" (Abstract)
+        # D. Open App
+        # Only strict "open [app]"
         match = re.search(r"(?i)^open\s+(.+)$", clean_input)
         if match:
-            return Goal(goal_id="open_application", target=self.normalize_entity(match.group(1)))
+            return Goal(
+                name="open_application", 
+                target=match.group(1).strip(),
+                response_mode="ACTION"
+            )
             
-        # Default/Unknown -> treated as general interaction or forwarded
-        return Goal(goal_id="unknown_intent", content=clean_input)
+        # E. Play
+        match = re.search(r"(?i)^play\s+(.+)$", clean_input)
+        if match:
+            return Goal(
+                name="play_media",
+                target=match.group(1).strip(),
+                response_mode="ACTION"
+            )
+
+        # 3. QUERY MODE (Default Fallback)
+        # Replaces "unsupported"
+        return Goal(
+            name="clarify",
+            response_mode="QUERY",
+            content="I am not sure how to help with that. Could you clarify?"
+        )
 
 if __name__ == "__main__":
     extractor = GoalExtractor()
-    print(extractor.extract_goal("Tell Alex I'll be late"))
-    print(extractor.extract_goal("WhatsApp Dad Hello"))
-    print(extractor.extract_goal("Open Chrome"))
+    print(extractor.extract_goal("tell alex ill be late"))
+    print(extractor.extract_goal("whatsapp dad hello"))
+    print(extractor.extract_goal("write a python script"))
+    print(extractor.extract_goal("send message to mum")) # Should be QUERY

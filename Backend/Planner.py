@@ -21,7 +21,6 @@ Available Actions:
 - "open": {"target": "app_name"}
 - "send_whatsapp": {"target": "[Contact] | [Message]"}
 - "content": {"target": "topic"}
-- "wait": {"target": "seconds"}  (Use ONLY if explicitly requested by user)
 
 Rules:
 1. Return strictly a JSON object (NOT an array).
@@ -88,15 +87,18 @@ def generate_plan(user_query, failure_context=None, context=None, goal_obj=None,
 
         # GSO Integration
         if goal_obj and strategy_obj:
-            current_message += f"\n\n[GOAL]: {goal_obj.goal_id} (Target: {goal_obj.target})"
-            current_message += f"\n[STRATEGY]: {strategy_obj.strategy_id} (Reason: {strategy_obj.reason})"
+            current_message += f"\n\n[GOAL]: {goal_obj.name} (Target: {goal_obj.target})"
+            current_message += f"\n[STRATEGY]: {strategy_obj.name} (Reason: {strategy_obj.reason})"
             
-            if strategy_obj.strategy_id == "send_whatsapp":
+            if strategy_obj.name == "send_whatsapp":
                 current_message += f"\n[INSTRUCTION] Implementation MUST use 'send_whatsapp' action with target '{goal_obj.target} | {goal_obj.content}'."
-            elif strategy_obj.strategy_id == "open_app_direct":
+            elif strategy_obj.name == "open_app_direct":
                 current_message += f"\n[INSTRUCTION] Implementation MUST use 'open' action for target '{goal_obj.target}'."
-            elif strategy_obj.strategy_id == "generate_image_hf":
+            elif strategy_obj.name == "generate_image_local":
                 current_message += f"\n[INSTRUCTION] Implementation MUST use 'generate_image' action with target as the prompt: '{goal_obj.content}'."
+            elif strategy_obj.name == "ask_user":
+                current_message += f"\n[INSTRUCTION] Goal is unclear. Use 'content' action to Ask the user for clarification."
+
 
         response = co.chat(
             model='command-r-08-2024',

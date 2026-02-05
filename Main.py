@@ -197,28 +197,48 @@ def MainExecution():
 
 # Thread for primary execution loop
 def FirstThread():
+    consecutive_failures = 0
+    last_status = ""
+    
     while True:
         try:
             CurrentStatus = GetMicrophoneStatus()
-            print(f"Current Microphone Status: {CurrentStatus}")  # Debugging
-
-            if CurrentStatus.lower() == "true":  # Case-insensitive comparison
-                print("Executing MainExecution")  # Debugging
-                MainExecution()
+            
+            if CurrentStatus.lower() == "true":
+                # Execute Main Logic
+                # MainExecution now returns True on success, False/None on failure
+                result = MainExecution()
+                
+                if result:
+                    consecutive_failures = 0
+                else:
+                    consecutive_failures += 1
+                    print(f"MainExecution failed/empty. Failures: {consecutive_failures}")
+                    
+                if consecutive_failures >= 2:
+                    print("Too many mic failures. Pausing for 3s...")
+                    SetAsssistantStatus("Paused...")
+                    sleep(3)
+                    consecutive_failures = 0
+                    SetAsssistantStatus("Available...")
+                
             elif CurrentStatus.lower() == "false":
                 AIStatus = GetAssistantStatus()
-                print(f"Current Assistant Status: {AIStatus}")  # Debugging
-
-                if "Available..." in AIStatus:
-                    sleep(0.1)
-                else:
-                    print("Setting Assistant Status to 'Available...'")  # Debugging
-                    SetAsssistantStatus("Available...")
+                
+                # Debounced Status Update
+                target_status = "Available..."
+                if AIStatus != target_status:
+                    SetAsssistantStatus(target_status)
+                    print(f"Status updated to {target_status}")
+                
+                sleep(0.3) # idle wait (Debounce)
+                
             else:
-                print("Unexpected Microphone Status value. Defaulting to 'False'.")  # Debugging
+                sleep(1)
+
         except Exception as e:
             print(f"Error in FirstThread: {e}")
-            sleep(1)  # Avoid infinite rapid errors
+            sleep(1)
 
 
 

@@ -28,9 +28,18 @@ def Classify(prompt):
         print(f"Classification Error: {e}")
         return "general" # Default to chat if classifier fails
 
+from Backend.normalize import normalize_text
+
 # Supervisor Logic (v3 Adapter)
 def FirstLayerDMM(prompt: str = "test"):
-    print(f"\n[Supervisor v3] Received request: {prompt}")
+    # STEP 3: APPLY NORMALIZATION AT THE ENTRY POINT
+    normalized_prompt = normalize_text(prompt)
+    
+    print(f"\n[Supervisor v3] Received request (Raw): {prompt}")
+    print(f"[Supervisor v3] Normalized: {normalized_prompt}")
+    
+    # Use normalized prompt for all downstream logic
+    prompt = normalized_prompt
     
     # 1. Classify Intent
     intent = Classify(prompt)

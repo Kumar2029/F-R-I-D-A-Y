@@ -11,6 +11,7 @@ from Backend.GoalExtractor import GoalExtractor
 from Backend.StrategySelector import StrategySelector
 from Backend.Planner import generate_plan
 from Backend.CommandCompiler import compile_commands
+from Backend.normalize import normalize_text
 
 # Mock classes for testing
 class MockModel:
@@ -22,6 +23,7 @@ async def test_messaging_intent():
     print("\n--- Testing Messaging Intent ---")
     query = "Send a hi message to brother 2"
     print(f"Query: {query}")
+    query = normalize_text(query)
 
     # 1. Goal Extraction
     # Fixed: GoalExtractor does not take arguments
@@ -29,7 +31,7 @@ async def test_messaging_intent():
     goal = extractor.extract_goal(query)
     print(f"Goal Extracted: {goal}")
     
-    if not goal or goal.goal_id != "send_message":
+    if not goal or goal.name != "send_message":
         print("FAILED: Incorrect goal extracted.")
         return
 
@@ -38,7 +40,7 @@ async def test_messaging_intent():
     strategy = selector.select_strategy(goal)
     print(f"Strategy Selected: {strategy}")
 
-    if not strategy or strategy.strategy_id != "send_whatsapp":
+    if not strategy or strategy.name != "send_whatsapp":
         print("FAILED: Incorrect strategy selected.")
         return
 
@@ -92,12 +94,13 @@ async def test_generic_messaging_intent():
     print("\n--- Testing Generic Messaging Intent ('Send a message to Mom') ---")
     query = "Send a message to Mom"
     print(f"Query: {query}")
+    query = normalize_text(query)
 
     extractor = GoalExtractor()
     goal = extractor.extract_goal(query)
     print(f"Goal Extracted: {goal}")
     
-    if goal and goal.goal_id == "send_message" and goal.content is None:
+    if goal and goal.name == "send_message" and goal.content is None:
         print("SUCCESS: Correctly identified generic intent with NO content.")
     else:
         print(f"FAILED: Goal={goal} (Expected content=None)")
@@ -106,13 +109,14 @@ async def test_search_intent():
     print("\n--- Testing Search Intent ---")
     query = "Friday search for Python Programming courses"
     print(f"Query: {query}")
+    query = normalize_text(query)
 
     # 1. Goal Extraction
     extractor = GoalExtractor()
     goal = extractor.extract_goal(query)
     print(f"Goal Extracted: {goal}")
     
-    if not goal or goal.goal_id != "search_web":
+    if not goal or goal.name != "search_web":
         print(f"FAILED: Incorrect goal extracted: {goal}") # Fixed printing
         # Don't return, let's see what happens.
     
@@ -122,7 +126,7 @@ async def test_search_intent():
     strategy = selector.select_strategy(goal)
     print(f"Strategy Selected: {strategy}")
 
-    if not strategy or strategy.strategy_id != "search_web":
+    if not strategy or strategy.name != "search_web":
         print("FAILED: Incorrect strategy selected.")
         return
         
@@ -167,6 +171,7 @@ async def test_punctuation_normalization():
     # Case 1: Trailing punctuation in contact
     query1 = "Send a hi message to brother 2."
     print(f"Query 1: {query1}")
+    query1 = normalize_text(query1)
     extractor = GoalExtractor()
     goal1 = extractor.extract_goal(query1)
     print(f"Goal 1: {goal1}")
@@ -179,6 +184,7 @@ async def test_punctuation_normalization():
     # Case 2: Trailing punctuation in search
     query2 = "Search for python courses."
     print(f"Query 2: {query2}")
+    query2 = normalize_text(query2)
     goal2 = extractor.extract_goal(query2)
     print(f"Goal 2: {goal2}")
     

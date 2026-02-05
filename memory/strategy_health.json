@@ -1,17 +1,32 @@
 {
-  "generate_image_hf": {
-    "failures": 1,
-    "quarantined": false,
-    "last_failure": "2026-01-21T18:06:24.278051"
+  "mock_strategy": {
+    "success_count": 0,
+    "failure_count": 1,
+    "consecutive_failures": 0,
+    "cooldown_remaining": 0
   },
-  "default_action": {
-    "failures": 1,
-    "quarantined": false,
-    "last_failure": "2026-01-24T13:31:41.170011"
+  "search_web": {
+    "success_count": 8,
+    "failure_count": 0,
+    "consecutive_failures": 0,
+    "cooldown_remaining": 0
   },
-  "generate_image_local": {
-    "failures": 0,
-    "quarantined": false,
-    "last_failure": "2026-01-24T12:55:36.008437"
+  "send_whatsapp": {
+    "success_count": 3,
+    "failure_count": 0,
+    "consecutive_failures": 0,
+    "cooldown_remaining": 0
+  },
+  "ask_user": {
+    "success_count": 17,
+    "failure_count": 0,
+    "consecutive_failures": 0,
+    "cooldown_remaining": 0
+  },
+  "test_strategy": {
+    "success_count": 1,
+    "failure_count": 0,
+    "consecutive_failures": 0,
+    "cooldown_remaining": 0
   }
 }
