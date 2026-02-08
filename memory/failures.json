@@ -214,5 +214,21 @@
         "failure_reason": "Secure WhatsApp flow failed",
         "timestamp": "2026-02-06T00:30:54.690699",
         "user_aborted": false
+    },
+    {
+        "goal_type": "send message to mom saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-06T00:46:15.377389",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth son saying whatsapp",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T22:51:31.736832",
+        "user_aborted": false
     }
 ]

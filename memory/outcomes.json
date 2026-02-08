@@ -907,5 +907,71 @@
     "time_taken": 0.1,
     "retries": 0,
     "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-05T19:16:15.406461",
+    "goal_id": "b4a108c9-a321-4025-8baa-1142e1c938dd",
+    "target": "mom",
+    "strategy": "send_whatsapp",
+    "success": false,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.397
+  },
+  {
+    "timestamp": "2026-02-05T19:25:18.387870",
+    "goal_id": "d222c5c8-09ab-43f6-9f45-b92d63008e05",
+    "target": "mom",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T17:22:18.010283",
+    "goal_id": "a41f2b83-484c-4d01-b406-5d9a49a38acc",
+    "target": "vasanth son",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 1,
+    "confidence": 0.93
+  },
+  {
+    "timestamp": "2026-02-08T17:23:03.356522",
+    "goal_id": "a3d8a533-7cfd-4c92-b9b8-fd65c90a1cef",
+    "target": "vasan",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T17:24:29.521513",
+    "goal_id": "2181e48e-0a57-46e2-bfc2-bd81c2f4beb0",
+    "target": "abhishek",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T17:26:35.556325",
+    "goal_id": "c5b3b44d-972a-4fcd-93d5-8cda9fc679a2",
+    "target": "udemy courses online",
+    "strategy": "search_web",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
   }
 ]

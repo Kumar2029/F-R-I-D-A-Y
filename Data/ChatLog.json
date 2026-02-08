@@ -1278,5 +1278,53 @@
     {
         "role": "assistant",
         "content": "Mission accomplished."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Task finished."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Objective met."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Achievement confirmed."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Result positive."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed (content bypass)."
+    },
+    {
+        "role": "assistant",
+        "content": "Content bypassed, goal achieved."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Success confirmed."
     }
 ]
