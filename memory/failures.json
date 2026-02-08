@@ -326,5 +326,21 @@
         "failure_reason": "Secure WhatsApp flow failed",
         "timestamp": "2026-02-08T23:36:21.790442",
         "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "name 'current_hash' is not defined",
+        "timestamp": "2026-02-08T23:44:47.551398",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "name 'current_hash' is not defined",
+        "timestamp": "2026-02-08T23:45:15.092371",
+        "user_aborted": false
     }
 ]

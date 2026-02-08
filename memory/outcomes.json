@@ -1061,5 +1061,115 @@
     "time_taken": 0.1,
     "retries": 0,
     "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:14:47.574794",
+    "goal_id": "8b5aba24-2f24-47bb-bfe2-13dd407c6666",
+    "target": "vasanth",
+    "strategy": "send_whatsapp",
+    "success": false,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.397
+  },
+  {
+    "timestamp": "2026-02-08T18:15:15.128293",
+    "goal_id": "4ef7d057-b2bb-4340-9020-92feb45c4293",
+    "target": "vasanth",
+    "strategy": "send_whatsapp",
+    "success": false,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.397
+  },
+  {
+    "timestamp": "2026-02-08T18:40:01.378918",
+    "goal_id": "6d697d67-1c31-41dd-a893-67467d080da3",
+    "target": "udemy online courses",
+    "strategy": "search_web",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:40:30.585061",
+    "goal_id": "2cf6cab9-90b3-4d60-b408-63873cfa9b98",
+    "target": "vasanth",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:40:45.948502",
+    "goal_id": "85fc3a1c-c6aa-4789-b62a-89714eaec1b4",
+    "target": null,
+    "strategy": "ask_user",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:41:26.032232",
+    "goal_id": "3e6e8678-1377-4794-930b-5dcb9b3a4fb6",
+    "target": "spotify and play a song",
+    "strategy": "open_app_direct",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:41:44.598211",
+    "goal_id": "404a30a8-785e-4bae-a97b-1ced0572f370",
+    "target": null,
+    "strategy": "ask_user",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:51:06.077661",
+    "goal_id": "0d04d64b-fff9-4432-890d-7e2d25a572d8",
+    "target": null,
+    "strategy": "ask_user",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:51:20.352459",
+    "goal_id": "70a34e6d-0147-4532-b32b-27c6ba864e7b",
+    "target": null,
+    "strategy": "ask_user",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:58:33.622078",
+    "goal_id": "316d8de2-4cde-4ebc-909e-eaeaf057e88b",
+    "target": null,
+    "strategy": "ask_user",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
   }
 ]

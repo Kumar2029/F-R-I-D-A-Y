@@ -6,24 +6,30 @@
     "cooldown_remaining": 0
   },
   "search_web": {
-    "success_count": 9,
+    "success_count": 10,
     "failure_count": 0,
     "consecutive_failures": 0,
     "cooldown_remaining": 0
   },
   "send_whatsapp": {
-    "success_count": 11,
+    "success_count": 12,
     "failure_count": 0,
     "consecutive_failures": 0,
     "cooldown_remaining": 0
   },
   "ask_user": {
-    "success_count": 17,
+    "success_count": 22,
     "failure_count": 0,
     "consecutive_failures": 0,
     "cooldown_remaining": 0
   },
   "test_strategy": {
+    "success_count": 1,
+    "failure_count": 0,
+    "consecutive_failures": 0,
+    "cooldown_remaining": 0
+  },
+  "open_app_direct": {
     "success_count": 1,
     "failure_count": 0,
     "consecutive_failures": 0,
