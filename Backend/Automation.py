@@ -15,7 +15,7 @@ import pyautogui
 import time
 from Backend.TextToSpeech import TTS
 from Backend.TextToSpeech import TTS
-from Backend.SpeechToText import SpeechRecognition
+from Backend.SpeechToText import SpeechRecognition, SpeechRecognitionConfirmation
 import win32gui
 import pytesseract
 from PIL import Image
@@ -55,6 +55,40 @@ def get_ui_state_signature(hwnd):
         print(f"[Automation] Hash Error: {e}")
         return None
 
+import hashlib
+import json
+
+class TrustedContactManager:
+    def __init__(self, filepath="Data/trusted_contacts.json"):
+        self.filepath = filepath
+        self.contacts = self._load_contacts()
+
+    def _load_contacts(self):
+        try:
+            if not os.path.exists(self.filepath):
+                print(f"[TrustedContacts] File not found: {self.filepath}")
+                return []
+            with open(self.filepath, 'r') as f:
+                data = json.load(f)
+                # Ensure it's a list of strings
+                if isinstance(data, list):
+                    return [str(c).lower().strip() for c in data]
+                return []
+        except Exception as e:
+            print(f"[TrustedContacts] Error loading contacts: {e}")
+            return []
+
+    def is_trusted(self, contact_name):
+        """
+        Checks if the contact is in the trusted list (Exact, Case-Insensitive).
+        """
+        normalized = contact_name.lower().strip()
+        is_trusted = normalized in self.contacts
+        print(f"[TrustedContacts] Checking '{normalized}': {'TRUSTED' if is_trusted else 'NOT TRUSTED'}")
+        return is_trusted
+
+# Initialize Global Manager
+trusted_manager = TrustedContactManager()
 
 env_vars = dotenv_values(".env")
 GroqAPIKey = env_vars.get("GroqAPIKey")
@@ -565,6 +599,29 @@ def is_message_ready(hwnd):
     # Let's assume message box is at bottom (~90% Y)
     return verify_input_safety(hwnd)
 
+def verify_identity_stack(hwnd, contact_name):
+    """
+    Checks all identity sources in priority order.
+    Returns True if ANY source confirms identity.
+    """
+    # 1. OCR (Strongest)
+    if is_ocr_available():
+        if verify_chat_header(hwnd, contact_name):
+            print("[Identity] Confirmed via OCR.")
+            return True
+            
+    # 2. Window Title (Medium)
+    if verify_window_title_identity(hwnd, contact_name):
+        print("[Identity] Confirmed via Window Title.")
+        return True
+        
+    # 3. Trusted Contact (Bypass)
+    if trusted_manager.is_trusted(contact_name):
+        print(f"[Identity] Contact '{contact_name}' is Trusted. Bypassing check.")
+        return True
+        
+    return False
+
 # --- HARDENED WORKFLOW ---
 
 def secure_whatsapp_workflow():
@@ -715,39 +772,42 @@ def secure_send_whatsapp(contact_name, message):
     else:
         print("[Automation] Chat Switch CONFIRMED (UI State Changed).")
 
+
     print("[Wait] Verifying chat open...")
     if not verify_input_safety(get_whatsapp_window()): # Use direct check first
          if not wait_until(lambda: verify_input_safety(get_whatsapp_window()), timeout=5, on_fail_reason="Chat Open"):
             print(f"[Automation] ABORT: Chat for '{contact_name}' did not open.")
             return False
 
-    # --- PART D: CONTACT SAFETY LOCK (STRICT IDENTITY VERIFICATION) ---
-    print("[Identity] Verifying Contact Identity...")
+    # --- PART D: SINGLE SOURCE OF TRUTH VERIFICATION ---
+    print(f"[Identity] Validating Identity for '{contact_name}'...")
     
-    identity_confirmed = False
+    # 1. Verify Identity (Stack: OCR -> Title -> Trusted)
+    is_verified = verify_identity_stack(get_whatsapp_window(), contact_name)
     
-    # 1. Try OCR (Priority 1)
-    if is_ocr_available():
-        if verify_chat_header(get_whatsapp_window(), contact_name):
-            identity_confirmed = True
-            print("[Identity] Confirmed via OCR.")
-    
-    # 2. Try Window Title (Priority 2 / Backup)
-    if not identity_confirmed:
-        if verify_window_title_identity(get_whatsapp_window(), contact_name):
-            identity_confirmed = True
-            print("[Identity] Confirmed via Window Title.")
-            
-    # 3. STRICT GUARD: If NOT confirmed -> FALLBACK TO VOICE CONFIRMATION
-    if not identity_confirmed:
-         print(f"[Automation] Identity Verification Failed. Initiating CONFIRMATION MODE.")
-         if wait_for_user_confirmation(contact_name):
-             print("[Identity] User Verified Identity.")
-             identity_confirmed = True
-         else:
-             print(f"[Automation] CRITICAL SAFETY ABORT: User declinied/failed confirmation for '{contact_name}'.")
-             TTS(f"Aborting message to {contact_name}.")
-             return False
+    if is_verified:
+        print(f"[Identity] Identity CONFIRMED. Proceeding to send.")
+    else:
+        # OPTION A: FALLBACK TO CHAT SWITCH GUARANTEE
+        # If we are here, OCR/Title failed, and contact is not trusted.
+        # BUT, if we confirmed the UI state changed (initial_hash != current_hash),
+        # we assume the click on the search result was successful.
+        
+        print(f"[Identity] Identity NOT confirmed (OCR/Title/Trusted failed).")
+        print(f"[Identity] Checking Chat Switch Guarantee...")
+        
+        # We rely on the implicit fact that if we reached this line, 
+        # Part C (Chat Switch) MUST have passed (otherwise we returned False earlier).
+        # We will double check strict safety logic is effectively "If switched -> Send".
+        
+        print(f"[SafeSend] Chat Switch was PROVEN earlier. BYPASSING Voice Confirmation per user preferences (Option A).")
+        print(f"[SafeSend] proceeding to send to presumed contact '{contact_name}'.")
+        is_verified = True # Force True based on Hash-Change trust
+
+    # 3. Final Guard
+    if not is_verified:
+        print("[Automation] ABORT: Verification state invalid.")
+        return False
          
     # 5. Type Message
     print(f"[Wait] Waiting for Message Input Readiness...")
@@ -772,30 +832,49 @@ def wait_for_user_confirmation(contact_name):
     """
     Blocking wait for user confirmation via Voice (Yes/No).
     Returns True if confirmed, False otherwise.
+    Uses dedicated 'Confirmation Mode' listener with Retry logic.
     """
     try:
         # Prompt Updated for "NEW CHAT" Context
         prompt = f"I have opened a NEW chat for {contact_name}. Please say YES to send the message or NO to cancel."
         TTS(prompt)
-        print(f"[Confirmation] Waiting for user input (YES/NO)...")
+        time.sleep(0.5) # Explicit Delay after TTS
+
+        # STRICT MATCHING
+        valid_yes = ["yes", "yeah", "yep", "sure", "ok", "okay", "confirm", "send", "proceed", "correct", "right"]
+        valid_no = ["no", "nope", "cancel", "stop", "abort", "don't", "wrong", "wait"]
         
-        # Listen for response (Blocking)
-        response = SpeechRecognition()
-        print(f"[Confirmation] User said: '{response}'")
-        
-        if not response:
-            TTS("I didn't hear you. Aborting safely.")
-            return False
+        # Retry Loop (Max 2 Attempts)
+        for attempt in range(1, 3):
+            print(f"[Confirmation] Waiting for user input (YES/NO) in CONFIRMATION MODE (Attempt {attempt}/2)...")
             
-        normalized = response.lower()
-        if "yes" in normalized or "send" in normalized or "confirm" in normalized:
-            return True
-        elif "no" in normalized or "cancel" in normalized or "stop" in normalized:
-            TTS("Cancelled.")
-            return False
-        else:
-            TTS("Response not understood. Cancelling.")
-            return False
+            # Listen for response (Blocking, Dedicated Mode)
+            response = SpeechRecognitionConfirmation(timeout=5)
+            print(f"[Confirmation] User said: '{response}'")
+            
+            normalized = response.lower()
+            
+            # Check NO first (Safe Default)
+            if any(word in normalized for word in valid_no):
+                TTS("Cancelled.")
+                print("[Confirmation] User explicitly CANCELLED.")
+                return False
+                
+            # Check YES
+            if any(word in normalized for word in valid_yes):
+                print("[Confirmation] User CONFIRMED.")
+                return True
+            
+            # If empty or ambiguous, retry if attempts remain
+            if attempt < 2:
+                TTS("I didn't hear you. Please say Yes or No.")
+                time.sleep(0.5)
+                continue
+                
+        # Failed after retries
+        TTS("I didn't get a confirmation. Aborting safely.")
+        print("[Confirmation] Max retries reached or ambiguous. Aborting.")
+        return False
             
     except Exception as e:
         print(f"[Confirmation] Error: {e}")

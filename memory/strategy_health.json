@@ -12,7 +12,7 @@
     "cooldown_remaining": 0
   },
   "send_whatsapp": {
-    "success_count": 7,
+    "success_count": 11,
     "failure_count": 0,
     "consecutive_failures": 0,
     "cooldown_remaining": 0

@@ -1326,5 +1326,45 @@
     {
         "role": "assistant",
         "content": "Success confirmed."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Mission complete."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Task accomplished."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Objective fulfilled."
+    },
+    {
+        "role": "user",
+        "content": "Sunday how are you message to vas?"
+    },
+    {
+        "role": "assistant",
+        "content": "Wishing Vas a great Sunday, asking about his well-being."
+    },
+    {
+        "role": "user",
+        "content": "Goal completed."
+    },
+    {
+        "role": "assistant",
+        "content": "Success achieved."
     }
 ]

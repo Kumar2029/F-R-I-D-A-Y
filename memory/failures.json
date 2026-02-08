@@ -230,5 +230,101 @@
         "failure_reason": "Secure WhatsApp flow failed",
         "timestamp": "2026-02-08T22:51:31.736832",
         "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth son saying whatsapp",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:08:13.323804",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth son son saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:09:39.842977",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth son son saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:10:01.552916",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasant saying whatsapp",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:11:25.808859",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:13:10.719407",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to batana song saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "cannot schedule new futures after shutdown",
+        "timestamp": "2026-02-08T23:19:02.117197",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying whatsapp",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:20:18.477324",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:25:00.004043",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:25:37.842203",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:30:19.062681",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:31:32.439837",
+        "user_aborted": false
+    },
+    {
+        "goal_type": "send message to vasanth saying a",
+        "context": "subgoal_execution",
+        "failure_stage": "execution",
+        "failure_reason": "Secure WhatsApp flow failed",
+        "timestamp": "2026-02-08T23:36:21.790442",
+        "user_aborted": false
     }
 ]

@@ -166,6 +166,112 @@ def SpeechRecognition():
         print(f"Error in speech recognition: {e}")
         return ""
 
+
+def SpeechRecognitionConfirmation(timeout=5, energy_threshold_override=None):
+    """
+    Dedicated mode for capturing short Yes/No confirmations.
+    Uses sounddevice (Raw) to bypass PyAudio dependency.
+    """
+    recognizer = sr.Recognizer()
+    recognizer.energy_threshold = energy_threshold_override if energy_threshold_override else EnergyThreshold
+    recognizer.dynamic_energy_threshold = False 
+    recognizer.pause_threshold = 0.6 
+    
+    print(f"Initializing confirmation listener (Timeout: {timeout}s)...")
+    
+    q = queue.Queue()
+    
+    def callback(indata, frames, time, status):
+        # Callback for sounddevice
+        if status:
+            print(status, flush=True)
+        q.put(indata.copy())
+
+    try:
+        device_info = sd.query_devices(kind='input')
+        samplerate = int(device_info['default_samplerate'])
+        
+        with sd.InputStream(samplerate=samplerate, channels=1, callback=callback, dtype='int16'):
+            print("Confirmation Listening... (Say YES or NO)")
+            
+            frames = []
+            recording = False
+            last_speech_time = 0
+            start_speech_time = 0
+            
+            start_time = time.time()
+            
+            while True:
+                # Global safety timeout
+                if time.time() - start_time > timeout + 2.0: 
+                    print("Confirmation Timeout (Hard Limit).")
+                    break
+
+                try:
+                    data = q.get(timeout=0.5)
+                except queue.Empty:
+                    # Check overall timeout if queue is empty
+                    if time.time() - start_time > timeout and not recording:
+                         print("Confirmation Timeout (No speech).")
+                         break
+                    continue
+                
+                temp_data = data.astype(np.float64)
+                rms = np.sqrt(np.mean(temp_data**2))
+                current_time = time.time()
+                
+                if rms > recognizer.energy_threshold:
+                    if not recording:
+                        print("Confirmation Speech Detected!")
+                        recording = True
+                        start_speech_time = current_time
+                    last_speech_time = current_time
+                    frames.append(data)
+                
+                elif recording:
+                    frames.append(data)
+                    # Silence timeout (shorter for confirmation)
+                    if current_time - last_speech_time > 0.8:  # 0.8s silence
+                        print("Confirmation Silence detected. Stop.")
+                        break
+                    # Max duration for confirmation (short)
+                    if current_time - start_speech_time > 3.0: 
+                         print("Confirmation Max duration. Stop.")
+                         break
+                else:
+                    # Waiting... Check timeout
+                    if current_time - start_time > timeout:
+                        print("Confirmation Timeout (Wait expired).")
+                        break
+            
+            if not frames:
+                return ""
+                
+            print("Processing Confirmation...")
+            recording_data = np.concatenate(frames, axis=0)
+            temp_wav = "temp_confirm.wav"
+            wav.write(temp_wav, samplerate, recording_data)
+            
+            try:
+                with sr.AudioFile(temp_wav) as source:
+                    audio_data = recognizer.record(source)
+                    text = recognizer.recognize_google(audio_data, language="en-US")
+                    print(f"Confirmation Heard: {text}")
+                    return text.lower().strip()
+            except sr.UnknownValueError:
+                print("Confirmation: Audio not understood.")
+                return ""
+            except Exception as e:
+                print(f"Confirmation Error: {e}")
+                return ""
+            finally:
+                if os.path.exists(temp_wav):
+                    os.remove(temp_wav)
+                    
+    except Exception as e:
+        print(f"Confirmation Microphone Error: {e}")
+        return ""
+
 if __name__ == "__main__":
     while True:
         Text = SpeechRecognition()

@@ -973,5 +973,93 @@
     "time_taken": 0.1,
     "retries": 0,
     "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T17:38:50.470562",
+    "goal_id": "f5e0ed97-89fd-4df2-9577-d0b55f01bd25",
+    "target": "vasanth son",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 1,
+    "confidence": 0.93
+  },
+  {
+    "timestamp": "2026-02-08T17:42:17.797770",
+    "goal_id": "ecd558bd-9440-4932-b6d5-cef38339ef33",
+    "target": "vasant",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 1,
+    "confidence": 0.93
+  },
+  {
+    "timestamp": "2026-02-08T17:55:37.869073",
+    "goal_id": "649a7f82-8f12-4c99-a428-30c36b33ca4e",
+    "target": "vasanth",
+    "strategy": "send_whatsapp",
+    "success": false,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 1,
+    "confidence": 0.33
+  },
+  {
+    "timestamp": "2026-02-08T18:00:19.095164",
+    "goal_id": "93e30cdf-47f7-40e2-91d4-abb3f39708bd",
+    "target": "vasanth",
+    "strategy": "send_whatsapp",
+    "success": false,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.397
+  },
+  {
+    "timestamp": "2026-02-08T18:01:32.479553",
+    "goal_id": "644d5253-2bc4-4c7a-9c99-05419a9da08a",
+    "target": "vasanth",
+    "strategy": "send_whatsapp",
+    "success": false,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.397
+  },
+  {
+    "timestamp": "2026-02-08T18:06:21.818586",
+    "goal_id": "91019f6c-c32f-4d76-9450-92ff22b9541a",
+    "target": "vasanth",
+    "strategy": "send_whatsapp",
+    "success": false,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.397
+  },
+  {
+    "timestamp": "2026-02-08T18:08:15.308906",
+    "goal_id": "f8961319-fe16-4cbc-bbc7-91edca5f896a",
+    "target": "vasant",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
+  },
+  {
+    "timestamp": "2026-02-08T18:09:02.915364",
+    "goal_id": "98a93536-e5bf-478e-8830-92bceeff9ae5",
+    "target": "vasanth",
+    "strategy": "send_whatsapp",
+    "success": true,
+    "fallback_used": false,
+    "time_taken": 0.1,
+    "retries": 0,
+    "confidence": 0.997
   }
 ]
