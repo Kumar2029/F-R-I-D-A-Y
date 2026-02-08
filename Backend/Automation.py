@@ -15,10 +15,45 @@ import pyautogui
 import time
 from Backend.TextToSpeech import TTS
 from Backend.TextToSpeech import TTS
+from Backend.SpeechToText import SpeechRecognition
 import win32gui
 import pytesseract
 from PIL import Image
 from Backend.automation_utils import wait_until
+import hashlib
+
+def get_ui_state_signature(hwnd):
+    """
+    Generates a signature of the current UI state to detect changes.
+    Uses Window Title + Header Region Image Hash.
+    """
+    try:
+        # 1. Window Title
+        title = win32gui.GetWindowText(hwnd)
+        
+        # 2. Header Region Hash (Visual State)
+        rect = win32gui.GetWindowRect(hwnd)
+        x, y, x2, y2 = rect
+        w = x2 - x
+        h = y2 - y
+        
+        region_left = x + int(w * HEADER_REGION["x"])
+        region_top = y + int(h * HEADER_REGION["y"])
+        region_width = int(w * HEADER_REGION["w"])
+        region_height = int(h * HEADER_REGION["h"])
+        
+        # Grab only the relevant header part which changes between contacts
+        img = pyautogui.screenshot(region=(region_left, region_top, region_width, region_height))
+        img_bytes = img.tobytes()
+        
+        # Create Hash
+        state_hash = hashlib.md5((title + str(len(img_bytes))).encode())
+        state_hash.update(img_bytes)
+        
+        return state_hash.hexdigest()
+    except Exception as e:
+        print(f"[Automation] Hash Error: {e}")
+        return None
 
 
 env_vars = dotenv_values(".env")
@@ -600,6 +635,19 @@ def secure_whatsapp_workflow():
     print("[Automation] WhatsApp Ready for Input.")
     return True
 
+def verify_window_title_identity(hwnd, expected_contact):
+    """
+    Checks if the active window title contains the contact name.
+    """
+    try:
+        title = win32gui.GetWindowText(hwnd).lower()
+        print(f"[Identity] Window Title: '{title}'")
+        if expected_contact.lower() in title:
+            return True
+        return False
+    except:
+        return False
+
 def secure_send_whatsapp(contact_name, message):
     """
     Implements the FULL Persistent WhatsApp Send Message Flow.
@@ -607,22 +655,28 @@ def secure_send_whatsapp(contact_name, message):
     """
     print(f"[Automation] Starting Secure Send to '{contact_name}'...")
     
-    # Part E: Normalize Contact Name
-    contact_name = contact_name.strip().replace(".", "") # Simple normalization
+    # Part A: Strict Normalization
+    contact_name = contact_name.strip().replace(".", "").replace(",", "").lower()
     
     # 1. Open & Setup (reusing secure workflow logic)
     if not secure_whatsapp_workflow():
         return False
         
+    # --- PART B: CAPTURE INITIAL STATE ---
+    print("[Automation] Capturing initial UI state...")
+    hwnd = get_whatsapp_window()
+    initial_hash = get_ui_state_signature(hwnd)
+    print(f"[Automation] Initial Hash: {initial_hash}")
+
     # 2. Type Contact Name (Slow)
     print(f"[Automation] Typing contact '{contact_name}'...")
     
     # SAFETY CLICK: Re-assert focus before real typing (Fixes probe cleanup focus loss)
-    hwnd = get_whatsapp_window()
+    # hwnd = get_whatsapp_window() # Already got above
     click_relative(hwnd, WHATSAPP_SEARCH_RATIO_X, WHATSAPP_SEARCH_RATIO_Y)
-    time.sleep(0.05) # Reduced from 0.1 (Part F)
+    time.sleep(0.05) 
     
-    # NEW: Clear Search State (Part E)
+    # NEW: Clear Search State
     print("[Automation] Clearing search state...")
     pyautogui.hotkey('ctrl', 'a')
     time.sleep(0.05)
@@ -633,39 +687,68 @@ def secure_send_whatsapp(contact_name, message):
     
     # Allow search results to render
     print("[Automation] Navigating search results via keyboard...")
-    time.sleep(0.8) # Reduced from 1.0 (Part F)
+    time.sleep(1.5) # Increased wait for results (Part B)
     
-    # KEYBOARD SELECTION (More reliable than mouse)
-    # Move focus to first search result
+    # KEYBOARD SELECTION 
+    # Do we press 'down'? If we have exact match, 'Enter' might open the first one.
+    # But usually focus stays on search box. We need 'down'.
     pyautogui.press("down")
-    time.sleep(0.05)
-    # Open selected chat
+    time.sleep(0.1)
     pyautogui.press("enter")
 
-    print("[Wait] Verifying chat open via message input readiness...")
+    print("[Wait] Waiting for Chat Switch Stabilization...")
+    time.sleep(2.0) # WAIT for UI refresh (Part B: Wait for UI stabilization)
+    
+    # --- PART C: PROVE CHAT SWITCH ---
+    print("[Automation] Verifying Chat Switch...")
+    current_hash = get_ui_state_signature(hwnd)
+    print(f"[Automation] Current Hash: {current_hash}")
+    
+    if not initial_hash or not current_hash:
+        print("[Automation] WARNING: Could not generate UI signatures. Proceeding with caution (Strict Identity Check required).")
+    elif initial_hash == current_hash:
+        print(f"[Automation] CRITICAL ABORT: Chat Switch NOT DETECTED. (Hash Unchanged)")
+        print(f"[Automation] The system assumes the previous chat is still open or the selection failed.")
+        TTS("I could not confirm that the chat switched. Aborting for safety.")
+        # DO NOT ASK FOR CONFIRMATION
+        return False
+    else:
+        print("[Automation] Chat Switch CONFIRMED (UI State Changed).")
+
+    print("[Wait] Verifying chat open...")
     if not verify_input_safety(get_whatsapp_window()): # Use direct check first
-         # Wait a bit if failed
          if not wait_until(lambda: verify_input_safety(get_whatsapp_window()), timeout=5, on_fail_reason="Chat Open"):
             print(f"[Automation] ABORT: Chat for '{contact_name}' did not open.")
             return False
 
-    # NEW: Verify Header (Strict Guard) -> Now Optional (Part A)
-    # If OCR is available, we check. If not, verify_chat_header returns True.
-    if not wait_until(lambda: verify_chat_header(get_whatsapp_window(), contact_name), timeout=5, on_fail_reason="Header Verification"):
-         # Part B/E: If OCR missing, we shouldn't fail (verify_chat_header handles this).
-         # If OCR is PRESENT but fails match, we assume wrong chat?
-         # User says: "If chat header cannot be verified AND input is ready -> proceed -> do NOT abort"
+    # --- PART D: CONTACT SAFETY LOCK (STRICT IDENTITY VERIFICATION) ---
+    print("[Identity] Verifying Contact Identity...")
+    
+    identity_confirmed = False
+    
+    # 1. Try OCR (Priority 1)
+    if is_ocr_available():
+        if verify_chat_header(get_whatsapp_window(), contact_name):
+            identity_confirmed = True
+            print("[Identity] Confirmed via OCR.")
+    
+    # 2. Try Window Title (Priority 2 / Backup)
+    if not identity_confirmed:
+        if verify_window_title_identity(get_whatsapp_window(), contact_name):
+            identity_confirmed = True
+            print("[Identity] Confirmed via Window Title.")
+            
+    # 3. STRICT GUARD: If NOT confirmed -> FALLBACK TO VOICE CONFIRMATION
+    if not identity_confirmed:
+         print(f"[Automation] Identity Verification Failed. Initiating CONFIRMATION MODE.")
+         if wait_for_user_confirmation(contact_name):
+             print("[Identity] User Verified Identity.")
+             identity_confirmed = True
+         else:
+             print(f"[Automation] CRITICAL SAFETY ABORT: User declinied/failed confirmation for '{contact_name}'.")
+             TTS(f"Aborting message to {contact_name}.")
+             return False
          
-         # If verify_chat_header returned False, it means OCR matched something else explicitly.
-         # But verify_chat_header() returns False on exception or mismatch.
-         # If input is ready (verified above), we might want to Proceed anyway?
-         # User Requirement: "If fail... -> proceed -> do NOT abort" (Part E)
-         print(f"[Automation] WARNING: Header verification failed. Assuming correct chat due to Input Readiness.")
-         # Proceeding instead of returning False
-         # TTS(f"I could not open the correct chat for {contact_name}. Please confirm.")
-         # return False
-         pass 
-
     # 5. Type Message
     print(f"[Wait] Waiting for Message Input Readiness...")
     if not wait_until(lambda: is_message_ready(get_whatsapp_window()), timeout=4, on_fail_reason="Message Input"):
@@ -678,13 +761,45 @@ def secure_send_whatsapp(contact_name, message):
     
     # 6. Verify Sent (Input Cleared)
     print(f"[Wait] Verifying Message Sent (Input Cleared/Ready)...")
-    # Immediate check follows
     if wait_until(lambda: is_message_ready(get_whatsapp_window()), timeout=5):
-        print("[Automation] Message Sent Verified (Input ready).")
+        print("[Automation] Message Sent Verified.")
         return True
     else:
-        print("[Automation] Warning: Input not ready after send (Possible network lag).")
+        print("[Automation] Warning: Input not ready after send.")
         return True
+
+def wait_for_user_confirmation(contact_name):
+    """
+    Blocking wait for user confirmation via Voice (Yes/No).
+    Returns True if confirmed, False otherwise.
+    """
+    try:
+        # Prompt Updated for "NEW CHAT" Context
+        prompt = f"I have opened a NEW chat for {contact_name}. Please say YES to send the message or NO to cancel."
+        TTS(prompt)
+        print(f"[Confirmation] Waiting for user input (YES/NO)...")
+        
+        # Listen for response (Blocking)
+        response = SpeechRecognition()
+        print(f"[Confirmation] User said: '{response}'")
+        
+        if not response:
+            TTS("I didn't hear you. Aborting safely.")
+            return False
+            
+        normalized = response.lower()
+        if "yes" in normalized or "send" in normalized or "confirm" in normalized:
+            return True
+        elif "no" in normalized or "cancel" in normalized or "stop" in normalized:
+            TTS("Cancelled.")
+            return False
+        else:
+            TTS("Response not understood. Cancelling.")
+            return False
+            
+    except Exception as e:
+        print(f"[Confirmation] Error: {e}")
+        return False
 
 def FocusWindow(app_name):
     """Force focus to a *visible* window with title containing app_name"""
