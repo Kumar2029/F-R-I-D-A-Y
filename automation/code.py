@@ -1,16 +1,10 @@
 from Backend.Automation import OpenApp, Type, Press
 from Backend.TextToSpeech import TTS
+from core.intents import CodeIntent
 import time
 
-def generate_code(content):
-    # Determine what to write based on content
-    # For now, simple Hello World or placeholder
-    if "python" in content.lower():
-        return 'print("Hello from JARVIS Action Domain")'
-    return "# Generated Code Placeholder"
-
-def handle_code_automation(goal):
-    print(f"[Action] Executing CODE Domain: {goal.content}")
+def handle_code_automation(intent: CodeIntent):
+    print(f"[Action] Executing CODE Domain: {intent.task_type} -> {intent.filename}")
     
     # 1. Open VS Code
     OpenApp("visual studio code")
@@ -21,15 +15,14 @@ def handle_code_automation(goal):
     Press("ctrl+n")
     time.sleep(0.5)
     
-    # 3. Write Code
-    code = generate_code(goal.content or "")
-    Type(code)
+    # 3. Write Code (Strict from Intent)
+    Type(intent.code)
     time.sleep(0.5)
 
     # 4. Save File
     Press("ctrl+s")
     time.sleep(1)
-    Type("program.py")
+    Type(intent.filename)
     Press("enter")
     time.sleep(1)
     
@@ -38,8 +31,8 @@ def handle_code_automation(goal):
     # 5. Run Code (Terminal)
     Press("ctrl+`") # Open terminal
     time.sleep(1)
-    Type("python program.py")
+    Type(f"python {intent.filename}")
     Press("enter")
 
-    TTS("Code written, executed, and saved successfully.")
+    TTS(f"Code for {intent.task_type} written and executed.")
     return True
