@@ -22,5 +22,13 @@
     {
         "role": "assistant",
         "content": "Confirmed."
+    },
+    {
+        "role": "user",
+        "content": "What's the current time."
+    },
+    {
+        "role": "assistant",
+        "content": "22 hours, 15 minutes, 08 seconds."
     }
 ]

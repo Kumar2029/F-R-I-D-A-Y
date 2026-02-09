@@ -1,7 +1,8 @@
-from enum import Enum, auto
+from enum import Enum
 
 class ActionDomain(Enum):
-    SYSTEM = auto()
-    CODE   = auto()
-    MEDIA  = auto()
-    MESSAGE = auto()
+    MEDIA = "media"
+    CODE = "code"
+    SYSTEM = "system"
+    WEB = "web"
+    GENERAL = "general"

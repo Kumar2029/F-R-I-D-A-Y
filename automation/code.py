@@ -4,7 +4,7 @@ from core.intents import CodeIntent
 import time
 
 def handle_code_automation(intent: CodeIntent):
-    print(f"[Action] Executing CODE Domain: {intent.task_type} -> {intent.filename}")
+    print(f"[Action] Executing CODE Domain: {intent.task} -> {intent.filename}")
     
     # 1. Open VS Code
     OpenApp("visual studio code")
@@ -16,7 +16,7 @@ def handle_code_automation(intent: CodeIntent):
     time.sleep(0.5)
     
     # 3. Write Code (Strict from Intent)
-    Type(intent.code)
+    Type(intent.generated_code)
     time.sleep(0.5)
 
     # 4. Save File
@@ -26,13 +26,11 @@ def handle_code_automation(intent: CodeIntent):
     Press("enter")
     time.sleep(1)
     
-    # Opt: overwrite confirmation if needed? (Assuming clean state or Enter handles it)
-
     # 5. Run Code (Terminal)
     Press("ctrl+`") # Open terminal
     time.sleep(1)
     Type(f"python {intent.filename}")
     Press("enter")
 
-    TTS(f"Code for {intent.task_type} written and executed.")
+    TTS(f"Code for {intent.task} written and executed.")
     return True
