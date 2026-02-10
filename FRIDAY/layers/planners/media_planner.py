@@ -1,51 +1,62 @@
 from FRIDAY.core.models import Intent, ExecutionPlan, AutomationAction, VerificationResult
-from FRIDAY.layers.handlers.spotify_handler import SpotifyHandler
+from Backend.MediaController import MediaController
 
 class MediaPlanner:
     def __init__(self):
-        self.spotify_handler = SpotifyHandler()
+        self.controller = MediaController()
 
     def plan(self, intent: Intent) -> ExecutionPlan:
-        action = intent.action.lower()
-        steps = []
-        verification = None
+        # GMC handles everything (Intent Normalization, Platform, Verification)
+        # We bridge FRIDAY Intent -> MediaIntent
         
-        # Check Parameters first, then Hints
-        platform = intent.parameters.get("platform", "").lower()
-        if not platform and intent.hints and intent.hints.preferred_platform:
-            platform = intent.hints.preferred_platform.lower()
-        if not platform:
-             platform = "spotify" # Default fallback
-             
+        # 1. Normalize
+        # FRIDAY Intent structure: action="play", parameters={"query": "...", "platform": "..."}
+        # We reconstruct the raw query "play <query> on <platform>" for GMC normalization
+        # OR better: usage internal normalization if we trust FRIDAY's slots.
+        # But GMC normalization is "Layer 1" and robust. 
+        # Let's perform a direct mapping.
+        
         query = intent.parameters.get("query", "")
+        platform = intent.parameters.get("platform", "")
         
-        if action == "play":
-            if "spotify" in platform:
-                # DELEGATION: Using SpotifyHandler for strict 5-Phase Execution
-                steps = self.spotify_handler.play_song(query)
-
-                # 4. Verification (Strict: Process Foreground)
-                verification = AutomationAction(
-                    type="verify_active_window", 
-                    params={"app_name": "Spotify"}
-                )
-                
-            elif "youtube" in platform:
-                steps.append(AutomationAction(type="open_url", params={"url": f"https://www.youtube.com/results?search_query={query}"}))
-                steps.append(AutomationAction(type="wait", params={"seconds": 3.0}))
-                # Click first video?
-                # Automating browser without Selenium/Playwright deeper integration is hard with just clicks.
-                # Assuming 'open_url' opens the results. User might need to click?
-                # User request: "Play ... on YouTube".
-                # Automation Layer should handle "click_first_result".
-                steps.append(AutomationAction(type="click_web_element", params={"selector": "first_video"}))
-                
-                verification = AutomationAction(
-                    type="verify_browser_title", 
-                    params={"expected_substring": query}
-                )
+        # If platform is empty, check hints
+        if not platform and intent.hints and intent.hints.preferred_platform:
+            platform = intent.hints.preferred_platform
+            
+        # Construct MediaIntent directly
+        from core.intents import MediaIntent
+        media_intent = MediaIntent(
+            action=intent.action,
+            query=query,
+            platform_hint=platform if platform else None
+        )
         
-        elif action == "pause" or action == "stop":
-             steps.append(AutomationAction(type="media_control", params={"command": "pause"}))
+        # EXECUTING HERE (Blocking Call)
+        # GMC is designed to be an executor.
+        print(f"[MediaPlanner] Delegating to GMC: {media_intent}")
+        success = self.controller.execute(media_intent)
+        
+        # Return a plan that reflects the result.
+        # Since execution happened, we return an empty plan (or dummy success) 
+        # so AutomationEngine doesn't try to re-run steps.
+        # We can use a "noop" step or just return success if allowed.
+        
+        if success:
+             # Return a dummy verification step that always passes, 
+             # because GMC already verified.
+             return ExecutionPlan(
+                 intent=intent, 
+                 steps=[], 
+                 verification_step=AutomationAction(type="verify_success_signal", params={})
+             )
+        else:
+             # Return valid plan but indicate failure? 
+             # Or raise exception?
+             # If we return empty steps, AutomationEngine does nothing.
+             # We should probably return a failed verification step.
+             return ExecutionPlan(
+                 intent=intent, 
+                 steps=[],
+                 verification_step=AutomationAction(type="verify_fail_signal", params={"reason": "GMC Execution Failed"})
+             )
 
-        return ExecutionPlan(intent=intent, steps=steps, verification_step=verification)

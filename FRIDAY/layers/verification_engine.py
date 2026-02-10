@@ -37,8 +37,14 @@ class VerificationEngine:
 
                 case "verify_command_execution":
                     return self._verify_command_execution(
-                        action.params.get("command")
+                         action.params.get("command")
                     )
+
+                case "verify_success_signal":
+                    return VerificationResult(True, message="GMC Execution Successful")
+
+                case "verify_fail_signal":
+                    return VerificationResult(False, error_message=action.params.get("reason", "Unknown Failure"))
 
                 case _:
                     print(f"[Verification] Unknown type: {action.type}")

@@ -133,6 +133,36 @@ class GoalManager:
              print("[GoalManager] Strict Clarification: Target missing for send_whatsapp.")
              return "Goal Paused: Clarification Needed"
         
+
+        # --- PART 7: MEDIA CONTROLLER (GMC) ---
+        if derived_goal.name == "play_media":
+            print(f"[GoalManager] Media Goal Detected: {derived_goal.target}")
+            
+            from Backend.MediaController import MediaController
+            controller = MediaController()
+            
+            # Layer 1: Normalization (Happens inside Controller for now, or we pre-normalize?)
+            # GoalExtractor gave us target="blinding lights on spotify"
+            # We let Controller parse it fully.
+            
+            intent = controller.normalize_intent(derived_goal.target)
+            
+            # Execute
+            if "calibrate" in derived_goal.target.lower() or "calibration" in derived_goal.target.lower():
+                 print("[GoalManager] Triggering Media Calibration...")
+                 controller.calibrate()
+                 goal_record["state"] = "completed"
+                 return "Calibration Completed"
+            
+            success = controller.execute(intent)
+            
+            if success:
+                goal_record["state"] = "completed"
+                return "Media Playback Started"
+            else:
+                 goal_record["state"] = "failed"
+                 return "Media Playback Failed"
+
         
         decomposer = GoalDecomposer()
         subgoals = decomposer.decompose(derived_goal)
