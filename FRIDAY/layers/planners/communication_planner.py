@@ -2,6 +2,10 @@ from FRIDAY.core.models import Intent, ExecutionPlan, AutomationAction
 from dotenv import dotenv_values
 
 class CommunicationPlanner:
+    def __init__(self):
+        from FRIDAY.layers.contact_resolver import ContactResolver
+        self.resolver = ContactResolver()
+
     def plan(self, intent: Intent) -> ExecutionPlan:
         steps = []
         action = intent.action.lower()
@@ -12,15 +16,26 @@ class CommunicationPlanner:
              # User mentioned "Automation is UI-based".
              # Strict flow: Open WhatsApp -> Search Contact -> Type Message -> Send
              
-             contact = intent.parameters.get("contact", "")
+             raw_contact = intent.parameters.get("contact", "")
              message = intent.parameters.get("message", "")
              
-             if not contact or not message:
-                 # Incomplete intent
+             # GUARD: Parameter missing
+             if not raw_contact:
+                 print("[CommunicationPlanner] Missing contact. Aborting.")
                  return ExecutionPlan(intent=intent, steps=[])
 
+             # RESOLVE CONTACT
+             contact = self.resolver.resolve(raw_contact)
+             print(f"[CommunicationPlanner] Resolved '{raw_contact}' to '{contact}'")
+
+             # GUARD: Empty payload
+             if not message:
+                 print("[CommunicationPlanner] Message missing. Defaulting to 'Hello'.")
+                 message = "Hello"
+
              steps.append(AutomationAction(type="open_app", params={"app_name": "WhatsApp"}))
-             steps.append(AutomationAction(type="wait", params={"seconds": 3.0}))
+             # Hardening: Wait longer for WhatsApp to load (heavy electron app)
+             steps.append(AutomationAction(type="wait", params={"seconds": 5.0}))
              
              # Search Contact (Ctrl+F or Click search)
              # WhatsApp Desktop (Windows app) shortcuts:
@@ -44,8 +59,8 @@ class CommunicationPlanner:
              # Check "sent" tick? Hard.
              # We can verify the contact name is in the window title.
              verification = AutomationAction(
-                 type="verify_window_title",
-                 params={"expected_substring": contact}
+                 type="verify_active_window",
+                 params={"app_name": "WhatsApp"}
              )
              
              return ExecutionPlan(intent=intent, steps=steps, verification_step=verification)

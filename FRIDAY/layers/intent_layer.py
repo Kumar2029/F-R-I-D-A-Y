@@ -19,10 +19,10 @@ ALLOWED DOMAINS:
 - SYSTEM: App control, Volume, Brightness, Shutdown
 - MEDIA: Spotify, YouTube, Playing media (Strictly verified)
 - CODE: Writing code, Opening VS Code, Creating files, Running code (Strictly Verified)
-- ACTION: App automation, System control, File operations, WhatsApp, Email
+- ACTION: App automation, System control, File operations, WhatsApp, Email, Send Message
 - SEARCH: Web search, Read-only information gathering (NO execution)
 - CONTENT: Explanation, Answering questions, Writing text ONLY (NO automation)
-- SYSTEM: Self diagnostics, Error reporting
+- SYSTEM: Self diagnostics, Error reporting (DO NOT USE for app control or messages)
 
 OUTPUT FORMAT:
 {
@@ -58,6 +58,9 @@ Output: {"domain": "SEARCH", "action": "search", "parameters": {"query": "falcon
 
 Input: "Open Calculator"
 Output: {"domain": "ACTION", "action": "open_app", "parameters": {"app_name": "Calculator"}}
+
+Input: "Send a message to John saying Hello"
+Output: {"domain": "ACTION", "action": "send_message", "parameters": {"contact": "John", "message": "Hello"}}
 """
 
 def parse_intent(text: str) -> Intent:

@@ -16,9 +16,13 @@ class DomainRouter:
             case ActionDomain.CODE:
                 return "CodePlanner"
             case ActionDomain.SYSTEM:
-                return "SystemPlanner"
+                return "ActionPlanner" # Fallback/Diagnostics
             case ActionDomain.ACTION:
-                return "CommunicationPlanner"
+                # Sub-routing based on action type
+                action = intent.action.lower()
+                if "whatsapp" in action or "message" in action or "send" in action or "email" in action:
+                    return "CommunicationPlanner"
+                return "ActionPlanner" # Default for open/close/volume
             case ActionDomain.CONTENT:
                 return "GeneralPlanner"
             case ActionDomain.SEARCH:

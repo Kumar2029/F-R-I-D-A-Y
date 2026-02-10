@@ -6,17 +6,20 @@ import traceback
 # Ensure root is in path
 sys.path.append(os.getcwd())
 
-from FRIDAY.core.models import Intent, ActionDomain
+from FRIDAY.core.models import Intent, ActionDomain, ActionResult
 from FRIDAY.core.router import DomainRouter
 from FRIDAY.layers.intent_layer import parse_intent
 from FRIDAY.layers.feedback_layer import FeedbackLayer
 from FRIDAY.layers.automation_engine import AutomationEngine
+from FRIDAY.core.models import ActionResult
 from FRIDAY.layers.verification_engine import VerificationEngine
 from FRIDAY.layers.learning_layer import LearningAdvisoryLayer
 from FRIDAY.layers.planners.media_planner import MediaPlanner
 from FRIDAY.layers.planners.code_planner import CodePlanner
-from FRIDAY.layers.planners.system_planner import SystemPlanner
+from FRIDAY.layers.planners.action_planner import ActionPlanner
+from FRIDAY.layers.planners.action_planner import ActionPlanner
 from FRIDAY.layers.planners.general_planner import GeneralPlanner
+from FRIDAY.layers.planners.communication_planner import CommunicationPlanner
 
 class TextConsoleOrchestrator:
     def __init__(self):
@@ -30,7 +33,8 @@ class TextConsoleOrchestrator:
         self.planners = {
             "MediaPlanner": MediaPlanner(),
             "CodePlanner": CodePlanner(),
-            "SystemPlanner": SystemPlanner(),
+            "ActionPlanner": ActionPlanner(),
+            "CommunicationPlanner": CommunicationPlanner(),
             "GeneralPlanner": GeneralPlanner(),
         }
         
@@ -85,7 +89,14 @@ class TextConsoleOrchestrator:
             print(f"[Verification] Failed: {verify_result.error_message}")
 
         # 6. LEARNING UPDATE
-        self.learning.learn(intent, plan, verify_result)
+        # 6. LEARNING UPDATE (Fix: Wrap in ActionResult)
+        final_result = ActionResult(
+            success=(result.success and verify_result.success),
+            message=result.message if result.success else result.message,
+            verification=verify_result,
+            logs=[str(verify_result.data)] if verify_result.data else []
+        )
+        self.learning.learn(intent, plan, final_result)
 
 if __name__ == "__main__":
     console = TextConsoleOrchestrator()
@@ -93,10 +104,11 @@ if __name__ == "__main__":
     # Test Cases
     commands = [
         "Play Blinding Lights on Spotify",
-        "Write a python program to print 'Hello Friday' to the console",
-        "What is Artificial Intelligence?",
-        "Search for SpaceX Starship launch",
-        "Send a message to John saying Hello World"
+        # "Write a python program to print 'Hello Verified' to the console",
+        # "Open Calculator",
+        # "Send a message to Mom",  
+        # "Send a message to Mom",  
+        # "Send a message to John saying Hello World"
     ]
     
     for cmd in commands:

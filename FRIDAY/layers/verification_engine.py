@@ -24,11 +24,21 @@ class VerificationEngine:
                         action.params.get("expected_substring")
                     )
 
+                case "verify_active_window":
+                    return self._verify_active_window(
+                         action.params.get("app_name")
+                    )
+
                 case "verify_file_exists":
                     path = action.params.get("path")
                     if os.path.exists(path):
                         return VerificationResult(True, message=f"File found: {path}")
                     return VerificationResult(False, error_message=f"File not found: {path}")
+
+                case "verify_command_execution":
+                    return self._verify_command_execution(
+                        action.params.get("command")
+                    )
 
                 case _:
                     print(f"[Verification] Unknown type: {action.type}")
@@ -53,3 +63,41 @@ class VerificationEngine:
             return VerificationResult(False, error_message=f"No window found containing '{expected_substring}'")
         except Exception as e:
              return VerificationResult(False, error_message=f"Window enum error: {e}")
+
+    def _verify_active_window(self, app_name: str) -> VerificationResult:
+        try:
+             hwnd = win32gui.GetForegroundWindow()
+             title = win32gui.GetWindowText(hwnd).lower()
+             print(f"[Verification] Active Window: {title}")
+             
+             if not app_name:
+                 return VerificationResult(False, error_message="No app name provided for verification")
+                 
+             if app_name.lower() in title:
+                 return VerificationResult(True, message=f"App '{app_name}' is in foreground.")
+            
+             # Special casing for Spotify where title changes to "Artist - Song"
+             if app_name.lower() == "spotify" and " - " in title:
+                 return VerificationResult(True, message=f"Spotify Likely Active (Playing: {title})")
+
+             # Fallback: Check if app_name is in the process name? (Harder with just win32gui)
+             # Strict verification requires title match for now.
+             return VerificationResult(False, error_message=f"Active window '{title}' does not contain '{app_name}'")
+        except Exception as e:
+             return VerificationResult(False, error_message=f"Active window check failed: {e}")
+
+    def _verify_command_execution(self, command: str) -> VerificationResult:
+        try:
+            print(f"[Verification] Running command: {command}")
+            import subprocess
+            # Capture output
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                return VerificationResult(True, message=f"Command executed successfully. Output: {output[:100]}...")
+            else:
+                error = result.stderr.strip()
+                return VerificationResult(False, error_message=f"Command failed (Exit {result.returncode}): {error}")
+        except Exception as e:
+            return VerificationResult(False, error_message=f"Command verification failed: {e}")

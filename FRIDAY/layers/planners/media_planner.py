@@ -1,6 +1,10 @@
 from FRIDAY.core.models import Intent, ExecutionPlan, AutomationAction, VerificationResult
+from FRIDAY.layers.handlers.spotify_handler import SpotifyHandler
 
 class MediaPlanner:
+    def __init__(self):
+        self.spotify_handler = SpotifyHandler()
+
     def plan(self, intent: Intent) -> ExecutionPlan:
         action = intent.action.lower()
         steps = []
@@ -17,29 +21,13 @@ class MediaPlanner:
         
         if action == "play":
             if "spotify" in platform:
-                # 1. Focus App
-                steps.append(AutomationAction(type="open_app", params={"app_name": "Spotify"}))
-                steps.append(AutomationAction(type="wait", params={"seconds": 2.0}))
-                
-                # 2. Robust Search (Clear & Type)
-                steps.append(AutomationAction(type="press_key", params={"key": "ctrl+l"}))
-                steps.append(AutomationAction(type="wait", params={"seconds": 0.5}))
-                steps.append(AutomationAction(type="press_key", params={"key": "ctrl+a"})) # Select all
-                steps.append(AutomationAction(type="press_key", params={"key": "backspace"})) # Clear
-                steps.append(AutomationAction(type="type_text", params={"text": query}))
-                steps.append(AutomationAction(type="wait", params={"seconds": 1.0}))
-                steps.append(AutomationAction(type="press_key", params={"key": "enter"}))
-                
-                # 3. Select & Play
-                steps.append(AutomationAction(type="wait", params={"seconds": 1.5}))
-                steps.append(AutomationAction(type="press_key", params={"key": "tab"})) # Ensure focus moves to content
-                steps.append(AutomationAction(type="press_key", params={"key": "enter"})) # Play top result
-                
-                # 4. Verification
-                steps.append(AutomationAction(type="wait", params={"seconds": 3.0})) # Wait for title update
+                # DELEGATION: Using SpotifyHandler for strict 5-Phase Execution
+                steps = self.spotify_handler.play_song(query)
+
+                # 4. Verification (Strict: Process Foreground)
                 verification = AutomationAction(
-                    type="verify_media_title", 
-                    params={"expected_title": query, "app_name": "Spotify"}
+                    type="verify_active_window", 
+                    params={"app_name": "Spotify"}
                 )
                 
             elif "youtube" in platform:

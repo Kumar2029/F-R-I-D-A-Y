@@ -65,8 +65,8 @@ class LearningAdvisoryLayer:
             # For now, we skip complex pattern matching to keep it safe.
 
             # Attach hints
-            intent.hints = hints
-            print(f"[Learning] Advised: {hints}")
+            # intent.hints = hints (Disabled temporarily to reduce console noise)
+            # print(f"[Learning] Advised: {hints}")
             return intent
 
         except Exception as e:
@@ -105,7 +105,7 @@ class LearningAdvisoryLayer:
                     "action": intent.action,
                     "plan_id": plan_id,
                     "error": result.message,
-                    "verification_error": result.verification.error_message if result.verification else None
+                    "verification_error": getattr(result, "verification", None).error_message if hasattr(result, "verification") and result.verification else None
                 }
                 self.failures.append(failure_record)
                 # Keep log manageable (last 50)

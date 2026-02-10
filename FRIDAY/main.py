@@ -18,7 +18,7 @@ from FRIDAY.layers.learning_layer import LearningAdvisoryLayer
 # Import Planners
 from FRIDAY.layers.planners.media_planner import MediaPlanner
 from FRIDAY.layers.planners.code_planner import CodePlanner
-from FRIDAY.layers.planners.system_planner import SystemPlanner
+from FRIDAY.layers.planners.action_planner import ActionPlanner
 from FRIDAY.layers.planners.general_planner import GeneralPlanner
 from FRIDAY.layers.planners.communication_planner import CommunicationPlanner
 from FRIDAY.layers.planners.web_planner import WebPlanner
@@ -38,7 +38,7 @@ class FridayOrchestrator:
         self.planners = {
             "MediaPlanner": MediaPlanner(),
             "CodePlanner": CodePlanner(),
-            "SystemPlanner": SystemPlanner(),
+            "ActionPlanner": ActionPlanner(),
             "GeneralPlanner": GeneralPlanner(),
             "CommunicationPlanner": CommunicationPlanner(),
             "WebPlanner": WebPlanner(),
