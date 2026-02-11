@@ -4,7 +4,5 @@ def fibonacci(n):
     while len(fib_sequence) < n:
         fib_sequence.append(fib_sequence[-1] + fib_sequence[-2])
     return fib_sequence
-def print_fibonacci(n):
-    fib_sequence = fibonacci(n)
-    print(f"The first {n} numbers in the Fibonacci sequence are: {fib_sequence}")
-print_fibonacci(10)
+n = 10
+print(f"Fibonacci series up to {n} terms: {fibonacci(n)}")

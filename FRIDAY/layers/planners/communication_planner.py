@@ -12,12 +12,20 @@ class CommunicationPlanner:
         
         # WhatsApp Logic
         if "whatsapp" in action or "message" in action:
-             # Basic WhatsApp Web Automation or usage of 'pywhatkit' if allowed?
-             # User mentioned "Automation is UI-based".
-             # Strict flow: Open WhatsApp -> Search Contact -> Type Message -> Send
+             # robust parameter extraction
+             raw_contact = (
+                 intent.parameters.get("contact") or 
+                 intent.parameters.get("recipient") or 
+                 intent.parameters.get("person") or 
+                 intent.parameters.get("to") or 
+                 ""
+             )
              
-             raw_contact = intent.parameters.get("contact", "")
-             message = intent.parameters.get("message", "")
+             message = (
+                 intent.parameters.get("message") or 
+                 intent.parameters.get("content") or 
+                 "Hello"
+             )
              
              # GUARD: Parameter missing
              if not raw_contact:
@@ -28,40 +36,45 @@ class CommunicationPlanner:
              contact = self.resolver.resolve(raw_contact)
              print(f"[CommunicationPlanner] Resolved '{raw_contact}' to '{contact}'")
 
-             # GUARD: Empty payload
-             if not message:
-                 print("[CommunicationPlanner] Message missing. Defaulting to 'Hello'.")
-                 message = "Hello"
-
+             # --- ROBUST AUTOMATION STEPS ---
+             # 1. Open App
              steps.append(AutomationAction(type="open_app", params={"app_name": "WhatsApp"}))
-             # Hardening: Wait longer for WhatsApp to load (heavy electron app)
-             steps.append(AutomationAction(type="wait", params={"seconds": 5.0}))
              
-             # Search Contact (Ctrl+F or Click search)
-             # WhatsApp Desktop (Windows app) shortcuts:
-             # Ctrl+F: Search
+             # 2. Wait for Window (Crucial for robustness)
+             steps.append(AutomationAction(type="wait_for_window", params={"title": "WhatsApp", "timeout": 15.0}))
+             
+             # 3. Wait for App to be Ready (Loading text to disappear)
+             steps.append(AutomationAction(type="wait", params={"seconds": 2.0}))
+
+             # 4. Search Contact (Ctrl+F or Click search)
+             # Focus Search
              steps.append(AutomationAction(type="press_key", params={"key": "ctrl+f"}))
              steps.append(AutomationAction(type="wait", params={"seconds": 0.5}))
+             
+             # Type Name
              steps.append(AutomationAction(type="type_text", params={"text": contact}))
-             steps.append(AutomationAction(type="wait", params={"seconds": 1.0}))
-             steps.append(AutomationAction(type="press_key", params={"key": "enter"})) # Select contact
-             steps.append(AutomationAction(type="wait", params={"seconds": 0.5}))
              
-             # Type Message
+             # 5. Wait for Search Results (UI Stability)
+             steps.append(AutomationAction(type="wait_for_ui_stable", params={"duration": 1.0, "timeout": 5.0}))
+             
+             # 6. Select Contact (Enter)
+             steps.append(AutomationAction(type="press_key", params={"key": "enter"}))
+             steps.append(AutomationAction(type="wait", params={"seconds": 1.0})) # Chat load
+             
+             # 7. Type Message
              steps.append(AutomationAction(type="type_text", params={"text": message}))
-             steps.append(AutomationAction(type="wait", params={"seconds": 0.5}))
              
-             # Send
+             # 8. Send
              steps.append(AutomationAction(type="press_key", params={"key": "enter"}))
              
-             # Verification
-             # Check if message bubble exists? Hard without OCR.
-             # Check "sent" tick? Hard.
-             # We can verify the contact name is in the window title.
+             # Verification: Just check window is still active/focused
              verification = AutomationAction(
                  type="verify_active_window",
                  params={"app_name": "WhatsApp"}
              )
+             
+             # Feedback
+             steps.append(AutomationAction(type="speak", params={"text": f"Message sent to {contact}."}))
              
              return ExecutionPlan(intent=intent, steps=steps, verification_step=verification)
 
