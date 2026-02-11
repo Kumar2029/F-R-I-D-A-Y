@@ -122,3 +122,32 @@ class LearningAdvisoryLayer:
     def set_preference(self, key: str, value: str):
         self.preferences[key] = value
         self._save_json("preferences.json", self.preferences)
+
+    # ------------------------------------------------------------------
+    # 4. MEDIA LEARNING (GMC Specific)
+    # ------------------------------------------------------------------
+    def get_preferred_platform(self, song_name: Optional[str] = None) -> Optional[str]:
+        # 1. Check specific song history (Last successful platform)
+        if song_name:
+            # Simple sanitization
+            key = f"media_history_{song_name.lower().strip()}"
+            if key in self.preferences:
+                return self.preferences[key]
+
+        # 2. Check global default
+        return self.preferences.get("default_music_app")
+
+    def record_media_success(self, song_name: str, platform: str):
+        # Save last successful platform for this song
+        if song_name:
+            key = f"media_history_{song_name.lower().strip()}"
+            self.preferences[key] = platform
+            self._save_json("preferences.json", self.preferences)
+        
+        # Update global stats
+        # (covered by generic learn() if we pass the plan, but specific helps)
+    
+    def record_media_failure(self, song_name: str, platform: str):
+        # Maybe blacklist platform for this song temporarily?
+        # For now, just logging failure in generic failures is enough.
+        pass

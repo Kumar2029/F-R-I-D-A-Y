@@ -1,0 +1,24 @@
+{
+    "spotify": {
+        "search_bar": {
+            "x": 1014,
+            "y": 31
+        },
+        "first_result": {
+            "x": 891,
+            "y": 238
+        },
+        "calibrated": true
+    },
+    "youtube": {
+        "search_bar": {
+            "x": 748,
+            "y": 120
+        },
+        "first_video": {
+            "x": 648,
+            "y": 335
+        },
+        "calibrated": true
+    }
+}

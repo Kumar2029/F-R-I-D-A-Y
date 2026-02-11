@@ -4,6 +4,8 @@ from groq import Groq
 from dotenv import dotenv_values
 import os
 import time
+import re
+import ast
 
 # Load Env (Duplicate load - could be in core.config)
 env_vars = dotenv_values(".env")
@@ -24,10 +26,9 @@ class CodePlanner:
             code_content = self.generate_code(task, language)
             
             # Generate filename from task (snake_case)
-            import re
             # Remove common prefixes like "write a program to", "create a function to"
             clean_task = task.lower()
-            prefixes = ["write a program to ", "write code to ", "create a function to ", "print ", "calculate "]
+            prefixes = ["write a program to ", "write code to ", "create a function to ", "print ", "calculate ", "generate "]
             for p in prefixes:
                 if clean_task.startswith(p):
                     clean_task = clean_task[len(p):]
@@ -41,11 +42,13 @@ class CodePlanner:
                  
             filename = f"{safe_name}.py"
             
-            # DELEGATION: Using CodeHandler for strict VS Code Automation
-            steps = self.code_handler.write_code_in_vscode(code_content, filename)
+            filename = f"{safe_name}.py"
             
-            # 6. Verification (Absolute Path)
-            steps.append(AutomationAction(type="speak", params={"text": f"Code for {task} written and executed."}))
+            # DELEGATION: Backend-Driven Flow
+            steps = self.code_handler.generate_backend_steps(code_content, filename)
+            
+            # 6. Verification
+            steps.append(AutomationAction(type="speak", params={"text": f"Code for {task} generated and executed."}))
             
             verification = self.code_handler.get_verification_step(filename)
             
@@ -54,10 +57,16 @@ class CodePlanner:
         return ExecutionPlan(intent=intent, steps=[])
 
     def generate_code(self, task: str, language: str) -> str:
+        # STRICT SYSTEM PROMPT FOR CODE GEN
         prompt = f"""
-        You are a coding engine. Write a {language} program to: {task}.
-        Output ONLY the raw code. No markdown formatting (no ```python blocks). 
-        No explanation. Just the code.
+        You are a generic coding engine. Write a robust {language} program to: {task}.
+        
+        RULES:
+        1. Output ONLY the raw code. No markdown formatting (no ```python blocks). 
+        2. No explanation. Just the code.
+        3. The code MUST BE COMPLETE and RUNNABLE.
+        4. If the task implies a calculation (e.g. "Calculate Fibonacci"), the code MUST print the result to stdout so verification can see it.
+        5. Do not use input() unless explicitly asked. Hardcode example values if needed to demonstrate the logic.
         """
         try:
             completion = client.chat.completions.create(
@@ -66,9 +75,12 @@ class CodePlanner:
                 temperature=0.1
             )
             code = completion.choices[0].message.content
-            # Clean up if markdown was included despite instructions
-            code = code.replace("```python", "").replace("```", "").strip()
-            return code
+            code = completion.choices[0].message.content
+            
+            # Delegate to robust utility
+            from FRIDAY.core.utils import code_cleanup
+            return code_cleanup.clean_generated_code(code)
+
         except Exception as e:
             print(f"[CodePlanner] Gen Error: {e}")
-            return f"# Error generating code for {task}"
+            return f"print('Error generating code for {task}: {e}')"
